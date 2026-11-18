@@ -297,4 +297,515 @@
         }
 
         .role-card h4 {
-            font-
+            font-family: 'Cinzel', serif;
+            font-size: 1.35rem;
+            margin-bottom: 0.7rem;
+            color: #fff;
+        }
+
+        .role-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* ================= MÍDIA / GALERIA ================= */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .media-card {
+            background: var(--bg-card);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .media-card:hover {
+            border-color: var(--blood-bright);
+            transform: scale(1.02);
+        }
+
+        .media-visual {
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .vis-1 { background: radial-gradient(circle, #3b040c 0%, #07070a 90%); }
+        .vis-2 { background: radial-gradient(circle, #172554 0%, #07070a 90%); }
+        .vis-3 { background: radial-gradient(circle, #4c0519 0%, #09090d 90%); }
+        .vis-4 { background: radial-gradient(circle, #1e293b 0%, #050508 90%); }
+
+        .media-emoji {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 0 15px rgba(255, 30, 60, 0.5));
+        }
+
+        .rec-corner {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--blood-bright);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .media-info {
+            padding: 1.2rem;
+            border-top: 1px solid var(--panel-border);
+        }
+
+        .media-info h4 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .media-info p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* ================= LOJA FICTÍCIA ================= */
+        .store-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.6rem;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 1.6rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s;
+        }
+
+        .product-card:hover {
+            border-color: var(--blood-bright);
+            box-shadow: 0 10px 30px rgba(184, 12, 36, 0.22);
+        }
+
+        .product-badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--blood-bright);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-icon {
+            font-size: 3rem;
+            margin: 0.8rem 0;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1.2rem;
+            border-radius: 10px;
+        }
+
+        .product-card h4 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.15rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .product-card p {
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--panel-border);
+        }
+
+        .price {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .btn-buy {
+            background: var(--blood-red);
+            color: #fff;
+            border: none;
+            padding: 0.55rem 1rem;
+            border-radius: 6px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-buy:hover {
+            background: var(--blood-bright);
+        }
+
+        /* ================= MODAL DO CARRINHO & GALERIA ================= */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #101218;
+            border: 1px solid var(--blood-bright);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 480px;
+            width: 100%;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .cart-items {
+            margin: 1.2rem 0;
+            max-height: 220px;
+            overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.88rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .cart-total {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            text-align: right;
+            margin-bottom: 1.2rem;
+            color: #4ade80;
+        }
+
+        /* ================= RODAPÉ ================= */
+        footer {
+            border-top: 1px solid var(--panel-border);
+            padding: 2.5rem 5%;
+            text-align: center;
+            color: var(--text-muted);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                gap: 1rem;
+            }
+            nav a {
+                font-size: 0.78rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CABEÇALHO / MENU -->
+    <header>
+        <a href="#inicio" class="brand">
+            <span class="vhs-badge">● REC</span>
+            <h1>SCREAM <span>WOODSBORO</span></h1>
+        </a>
+        <nav>
+            <a href="#inicio">Início</a>
+            <a href="#sobre">Sobre o Jogo</a>
+            <a href="#galeria">Mídia / Galeria</a>
+            <a href="#loja">Loja</a>
+            <button class="cart-btn" onclick="toggleCart()">🛒 (<span id="cart-count">0</span>)</button>
+        </nav>
+    </header>
+
+    <!-- 1. PÁGINA INICIAL -->
+    <section id="inicio" class="hero" style="max-width: 100%;">
+        <div class="phone-tag">☎ CHAMADA DESCONHECIDA • WOODSBORO, CA</div>
+        <h2>QUAL É O SEU <span>FILME DE TERROR</span> FAVORITO?</h2>
+        <p>Entre nas ruas chuvosas de Woodsboro neste RPG tático em turnos. Escolha seu lado no massacre e decida quem chegará vivo aos créditos finais.</p>
+        <div class="hero-actions">
+            <a href="#sobre" class="btn-primary">DESCOBRIR O JOGO</a>
+            <a href="#loja" class="btn-secondary">ACESSAR LOJA DE WOODSBORO</a>
+        </div>
+    </section>
+
+    <!-- 2. EXPLICAÇÃO SOBRE O JOGO -->
+    <section id="sobre">
+        <div class="section-header">
+            <span class="section-tag">O Conceito</span>
+            <h3>SOBRE O JOGO</h3>
+        </div>
+
+        <div class="about-box">
+            <p class="about-main-text">
+                Um jogo inspirado na franquia do filme de terror <strong>"Pânico"</strong>, com estilo <strong>RPG</strong>. Você tem que <strong>sobreviver ao Ghostface</strong> ou <strong>se tornar o próprio</strong> e sair matando suas vítimas.
+            </p>
+        </div>
+
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="role-icon">🔪</div>
+                <h4>Jogue como Ghostface</h4>
+                <p>Assuma o manto negro e a faca Buck 120. Use terror psicológico, ataques furtivos e sangramento profundo para caçar cada alvo em Woodsboro.</p>
+            </div>
+            <div class="role-card">
+                <div class="role-icon">🔦</div>
+                <h4>Sobreviva ao Massacre</h4>
+                <p>Controle personagens icônicos como Sidney Prescott, Gale Weathers, Dewey Riley e Randy Meeks. Gerencie cura, defesa e contra-ataques para sobreviver.</p>
+            </div>
+            <div class="role-card">
+                <div class="role-icon">🎲</div>
+                <h4>Combate RPG em Turnos</h4>
+                <p>Batalhas estratégicas baseadas em Iniciativa, Ataque, Defesa e Críticos, com modos 1 Jogador (PvE contra a IA) ou Duelo Local (PvP 1v1).</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. MÍDIA / GALERIA -->
+    <section id="galeria">
+        <div class="section-header">
+            <span class="section-tag">Arquivos Confidenciais</span>
+            <h3>MÍDIA &amp; GALERIA</h3>
+        </div>
+
+        <div class="gallery-grid">
+            <div class="media-card" onclick="openMediaModal('Noite Chuvosa em Woodsboro', 'Cenário 3D atmosférico com iluminação noturna, postes piscando e reflexos no asfalto molhado.')">
+                <div class="media-visual vis-1">
+                    <span class="rec-corner">VHS // CENA 01</span>
+                    <div class="media-emoji">🌧️🔪</div>
+                </div>
+                <div class="media-info">
+                    <h4>Noite Chuvosa em Woodsboro</h4>
+                    <p>Clique para inspecionar detalhes da arena 3D.</p>
+                </div>
+            </div>
+
+            <div class="media-card" onclick="openMediaModal('O Predador: Ghostface', 'Alta iniciativa, golpes críticos letais e habilidades de terror psicológico para enfraquecer suas vítimas.')">
+                <div class="media-visual vis-2">
+                    <span class="rec-corner">ARQUIVO // KILLER</span>
+                    <div class="media-emoji">👻🩸</div>
+                </div>
+                <div class="media-info">
+                    <h4>O Predador: Ghostface</h4>
+                    <p>Visual e estilo de combate do assassino.</p>
+                </div>
+            </div>
+
+            <div class="media-card" onclick="openMediaModal('A Final Girl: Sidney Prescott', 'Equilíbrio perfeito entre defesa tática, estancamento de ferimentos e disparos precisos.')">
+                <div class="media-visual vis-3">
+                    <span class="rec-corner">ARQUIVO // SURVIVOR</span>
+                    <div class="media-emoji">🔫🛡️</div>
+                </div>
+                <div class="media-info">
+                    <h4>Os Sobreviventes</h4>
+                    <p>Elenco jogável com habilidades únicas de sobrevivência.</p>
+                </div>
+            </div>
+
+            <div class="media-card" onclick="openMediaModal('As Regras do Terror', 'Sistema de buffs, debuffs, hemorragia e câmera lenta dramática em acertos críticos.')">
+                <div class="media-visual vis-4">
+                    <span class="rec-corner">VHS // GAMEPLAY</span>
+                    <div class="media-emoji">📼⚡</div>
+                </div>
+                <div class="media-info">
+                    <h4>Mecânicas de RPG</h4>
+                    <p>Turnos táticos e efeitos viscerais em tempo real.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. LOJA FICTÍCIA -->
+    <section id="loja">
+        <div class="section-header">
+            <span class="section-tag">Mercado Negro de Woodsboro</span>
+            <h3>LOJA FICTÍCIA</h3>
+        </div>
+
+        <div class="store-grid">
+            <div class="product-card">
+                <div>
+                    <span class="product-badge">Skin Exclusiva • Assassino</span>
+                    <div class="product-icon">🎭</div>
+                    <h4>Máscara Clássica Envelhecida</h4>
+                    <p>Visual inspirado nos filmes originais com acabamento desgastado e brilho sombrio.</p>
+                </div>
+                <div class="product-footer">
+                    <span class="price">R$ 19,90</span>
+                    <button class="btn-buy" onclick="addToCart('Máscara Clássica Envelhecida', 19.90)">+ CARRINHO</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div>
+                    <span class="product-badge">Arma Cosmética</span>
+                    <div class="product-icon">🗡️</div>
+                    <h4>Faca Buck 120 Cromada</h4>
+                    <p>Lâmina espelhada com efeito visual especial de respingos durante ataques críticos.</p>
+                </div>
+                <div class="product-footer">
+                    <span class="price">R$ 14,90</span>
+                    <button class="btn-buy" onclick="addToCart('Faca Buck 120 Cromada', 14.90)">+ CARRINHO</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div>
+                    <span class="product-badge">Pacote Sobrevivente</span>
+                    <div class="product-icon">📻</div>
+                    <h4>Modulador de Voz &amp; Rádio</h4>
+                    <p>Desbloqueia falas exclusivas de provocação antes de cada turno na arena.</p>
+                </div>
+                <div class="product-footer">
+                    <span class="price">R$ 12,50</span>
+                    <button class="btn-buy" onclick="addToCart('Modulador de Voz & Rádio', 12.50)">+ CARRINHO</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div>
+                    <span class="product-badge">Edição Colecionador</span>
+                    <div class="product-icon">📼</div>
+                    <h4>Passe "Regras de Randy"</h4>
+                    <p>Acesso antecipado a novos cenários noturnos, trilha sonora VHS e avatares exclusivos.</p>
+                </div>
+                <div class="product-footer">
+                    <span class="price">R$ 34,90</span>
+                    <button class="btn-buy" onclick="addToCart('Passe Regras de Randy', 34.90)">+ CARRINHO</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL DO CARRINHO FICTÍCIO -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="toggleCart()">×</button>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--blood-bright);">CARRINHO DE COMPRAS</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">* Loja meramente ilustrativa para o projeto do jogo.</p>
+            <div id="cart-items" class="cart-items"></div>
+            <div id="cart-total" class="cart-total">Total: R$ 0,00</div>
+            <button class="btn-primary" style="width: 100%;" onclick="checkoutFicticio()">FINALIZAR COMPRA FICTÍCIA</button>
+        </div>
+    </div>
+
+    <!-- MODAL DA GALERIA -->
+    <div id="media-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeMediaModal()">×</button>
+            <span class="section-tag">Visualizador de Arquivo</span>
+            <h3 id="media-modal-title" style="font-family: 'Cinzel', serif; margin-bottom: 0.8rem;"></h3>
+            <p id="media-modal-desc" style="color: var(--text-muted); font-size: 0.95rem;"></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>SCREAM: NOITE EM WOODSBORO • PROJETO DE RPG TÁTICO</p>
+        <p style="margin-top: 0.4rem; font-size: 0.75rem;">"Nunca diga: Eu já volto!"</p>
+    </footer>
+
+    <script>
+        let cart = [];
+
+        function addToCart(name, price) {
+            cart.push({ name, price });
+            updateCartUI();
+            alert(`"${name}" foi adicionado ao seu carrinho fictício!`);
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').textContent = cart.length;
+            const itemsContainer = document.getElementById('cart-items');
+            const totalEl = document.getElementById('cart-total');
+
+            if (cart.length === 0) {
+                itemsContainer.innerHTML = '<p style="color: #9aa3b2;">Seu carrinho está vazio.</p>';
+                totalEl.textContent = 'Total: R$ 0,00';
+                return;
+            }
+
+            let total = 0;
+            itemsContainer.innerHTML = '';
+            cart.forEach((item, index) => {
+                total += item.price;
+                itemsContainer.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.name}</span>
+                        <span>R$ ${item.price.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                `;
+            });
+
+            totalEl.textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+
+        function toggleCart() {
+            updateCartUI();
+            document.getElementById('cart-modal').classList.toggle('active');
+        }
+
+        function checkoutFicticio() {
+            if (cart.length === 0) {
+                alert('Adicione pelo menos um item antes de finalizar!');
+                return;
+            }
+            alert('Pedido fictício realizado com sucesso! O Ghostface agradece a preferência.');
+            cart = [];
+            updateCartUI();
+            toggleCart();
+        }
+
+        function openMediaModal(title, desc) {
+            document.getElementById('media-modal-title').textContent = title;
+            document.getElementById('media-modal-desc').textContent = desc;
+            document.getElementById('media-modal').classList.add('active');
+        }
+
+        function closeMediaModal() {
+            document.getElementById('media-modal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
