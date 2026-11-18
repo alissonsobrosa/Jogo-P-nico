@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCREAM: Noite em Woodsboro - Site Oficial do RPG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050508;
+            --bg-card: #0d0f14;
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --blood-red: #b80c24;
+            --blood-bright: #ff1e3c;
+            --blood-glow: rgba(184, 12, 36, 0.55);
+            --text-main: #f2f4f8;
+            --text-muted: #9aa3b2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Vinheta cinematográfica */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 45%, rgba(0, 0, 0, 0.85) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* ================= NAVEGAÇÃO ================= */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(5, 5, 8, 0.88);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .vhs-badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            padding: 0.2rem 0.55rem;
+            border: 1px solid var(--blood-bright);
+            color: var(--blood-bright);
+            border-radius: 4px;
+            animation: pulseRec 1.8s infinite;
+        }
+
+        @keyframes pulseRec {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        .brand h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.45rem;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+        }
+
+        .brand span {
+            color: var(--blood-bright);
+        }
+
+        nav {
+            display: flex;
+            gap: 1.8rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--blood-bright);
+        }
+
+        .cart-btn {
+            background: rgba(184, 12, 36, 0.2);
+            border: 1px solid var(--blood-bright);
+            color: #fff;
+            padding: 0.45rem 0.9rem;
+            border-radius: 6px;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cart-btn:hover {
+            background: var(--blood-bright);
+        }
+
+        /* ================= PÁGINA INICIAL (HERO) ================= */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 4rem 5%;
+            position: relative;
+            background: 
+                radial-gradient(circle at 50% 30%, rgba(184, 12, 36, 0.22) 0%, transparent 60%),
+                linear-gradient(180deg, #050508 0%, #0b0c12 50%, #050508 100%);
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .phone-tag {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--blood-bright);
+            border: 1px solid rgba(255, 30, 60, 0.4);
+            background: rgba(184, 12, 36, 0.12);
+            padding: 0.4rem 1rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h2 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.2rem;
+            text-shadow: 0 0 30px var(--blood-glow);
+        }
+
+        .hero h2 span {
+            color: var(--blood-bright);
+        }
+
+        .hero p {
+            max-width: 680px;
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blood-red), #6b0413);
+            color: #fff;
+            border: 1px solid #ff4d6d;
+            padding: 0.95rem 2.2rem;
+            border-radius: 8px;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.12em;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 6px 25px var(--blood-glow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(255, 30, 60, 0.75);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid var(--panel-border);
+            padding: 0.95rem 2rem;
+            border-radius: 8px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--blood-bright);
+            background: rgba(184, 12, 36, 0.15);
+        }
+
+        /* ================= SEÇÕES GERAIS ================= */
+        section {
+            padding: 5.5rem 5%;
+            max-width: 1320px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-tag {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--blood-bright);
+            font-size: 0.85rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header h3 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.8rem, 3.5vw, 2.7rem);
+            font-weight: 900;
+        }
+
+        /* ================= SOBRE O JOGO ================= */
+        .about-box {
+            background: linear-gradient(145deg, #101219, #090a0e);
+            border: 1px solid rgba(255, 30, 60, 0.35);
+            border-radius: 16px;
+            padding: 2.8rem;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            margin-bottom: 3rem;
+        }
+
+        .about-main-text {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+            color: #fff;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .about-main-text strong {
+            color: var(--blood-bright);
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 1.8rem;
+        }
+
+        .role-card {
+            background: var(--bg-card);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 2rem;
+            transition: transform 0.25s, border-color 0.25s;
+        }
+
+        .role-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--blood-bright);
+        }
+
+        .role-icon {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .role-card h4 {
+            font-
