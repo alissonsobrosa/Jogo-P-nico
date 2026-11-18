@@ -14,3 +14,9 @@ Para deixar o jogo justo e sem nenhum boneco apelão, cada um dos quatro persona
 • Sidney Prescott é a sobrevivente equilibrada, ótima para segurar o jogo com cura própria e um tiro preciso que atravessa armadura.
 • Xerife Dewey funciona como o tanque do grupo, com bastante vida e defesa pesada, compensando a velocidade mais baixa.
 • Gale Weathers joga na estratégia, usando o flash da câmera para cegar o oponente e punindo quem já está ferido.
+
+INTEGRANTES: Alisson De Andrade Sobrosa & Yuri Ramos Bittencourt
+
+OQUE CADA UM FEZ:
+Alisson: O jogo e a ideia. (Usuário Github: alissonsobrosa)
+Yuri: O site e o design. (Usuário Github: yurirbittencourt-arch)
