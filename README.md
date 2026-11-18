@@ -17,4 +17,6 @@ Para deixar o jogo justo e sem nenhum boneco apelão, cada um dos quatro persona
 
 INTEGRANTES: Alisson De Andrade Sobrosa & Yuri Ramos Bittencourt
 
-OQUE CADA UM FEZ: Alisson: O jogo e a ideia. (Usuário Github: alissonsobrosa) & Yuri: O site e o design. (Usuário Github: yurirbittencourt-arch)
+OQUE CADA UM FEZ:
+Alisson: O jogo e a ideia. (Usuário Github: alissonsobrosa) 
+Yuri: O site e o design. (Usuário Github: yurirbittencourt-arch)
