@@ -1,0 +1,2994 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCREAM: Noite em Woodsboro - RPG 3D Realista</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #040406;
+            --panel-bg: rgba(10, 11, 15, 0.78);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --blood-red: #b80c24;
+            --blood-bright: #ff1e3c;
+            --blood-glow: rgba(184, 12, 36, 0.65);
+            --steel-gray: #8e96a4;
+            --text-main: #f2f4f8;
+            --text-muted: #9aa3b2;
+            --accent-blue: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Palco 3D Principal em Tela Cheia */
+        #world-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            cursor: grab;
+        }
+        #world-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* Vinheta cinematográfica e respingos de sangue na lente */
+        .crt-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.88) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #blood-lens-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            background:
+                radial-gradient(circle at 8% 12%, rgba(155, 8, 24, 0.65) 0%, transparent 18%),
+                radial-gradient(circle at 92% 18%, rgba(140, 5, 20, 0.55) 0%, transparent 22%),
+                radial-gradient(circle at 14% 88%, rgba(165, 10, 28, 0.6) 0%, transparent 24%),
+                radial-gradient(circle at 88% 85%, rgba(150, 6, 22, 0.65) 0%, transparent 20%),
+                radial-gradient(circle at center, transparent 55%, rgba(130, 0, 15, 0.42) 100%);
+        }
+
+        #screen-flash {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.12s ease-out;
+        }
+
+        /* Container UI sobreposto ao 3D */
+        #app {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.85rem 1.25rem;
+            max-width: 1480px;
+            margin: 0 auto;
+            pointer-events: none;
+        }
+
+        header, .screen, button, .mode-card, .char-card, .fighter-panel, .skills-panel, .log-panel, .gameover-card {
+            pointer-events: auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.65rem 1.2rem;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.2rem, 2.8vw, 1.85rem);
+            font-weight: 900;
+            letter-spacing: 0.18em;
+            color: #fff;
+            text-shadow: 0 0 18px var(--blood-glow), 0 2px 4px #000;
+        }
+
+        .brand span {
+            color: var(--blood-bright);
+        }
+
+        .vhs-badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.55rem;
+            border: 1px solid var(--blood-bright);
+            color: var(--blood-bright);
+            border-radius: 4px;
+            letter-spacing: 0.1em;
+            animation: pulseRec 1.8s infinite;
+        }
+
+        @keyframes pulseRec {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--panel-border);
+            color: var(--text-main);
+            padding: 0.5rem 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            background: rgba(184, 12, 36, 0.3);
+            border-color: var(--blood-bright);
+            transform: translateY(-1px);
+        }
+
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.35s ease forwards;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* MENU PRINCIPAL */
+        .menu-hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            text-align: center;
+            padding-bottom: 2rem;
+            pointer-events: none;
+        }
+
+        .phone-caller-box {
+            background: rgba(8, 8, 12, 0.84);
+            border: 1px solid rgba(255, 30, 60, 0.45);
+            border-radius: 16px;
+            padding: 1.25rem 2rem;
+            max-width: 680px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 45px rgba(184, 12, 36, 0.35);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
+        }
+
+        .caller-id {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--blood-bright);
+            font-size: 0.82rem;
+            letter-spacing: 0.16em;
+            margin-bottom: 0.45rem;
+        }
+
+        .quote-text {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.15rem, 2.3vw, 1.65rem);
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.35;
+        }
+
+        .mode-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            width: 100%;
+            max-width: 760px;
+            pointer-events: auto;
+        }
+
+        .mode-card {
+            background: linear-gradient(145deg, rgba(16, 18, 25, 0.88), rgba(8, 9, 13, 0.94));
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.6rem 1.4rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            backdrop-filter: blur(12px);
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--blood-bright);
+            box-shadow: 0 15px 35px rgba(184, 12, 36, 0.38);
+        }
+
+        .mode-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.74rem;
+            color: var(--blood-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        .mode-card h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .mode-card p {
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        /* SELEÇÃO DE PERSONAGENS COM PALCO 3D INTERATIVO */
+        .select-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+            pointer-events: none;
+        }
+
+        .select-header {
+            text-align: center;
+            background: rgba(10, 11, 15, 0.75);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            backdrop-filter: blur(10px);
+            align-self: center;
+            pointer-events: auto;
+        }
+
+        .select-header h2 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+            letter-spacing: 0.08em;
+        }
+
+        .select-turn-indicator {
+            display: inline-block;
+            margin-top: 0.35rem;
+            padding: 0.3rem 0.9rem;
+            background: rgba(184, 12, 36, 0.25);
+            border: 1px solid var(--blood-bright);
+            border-radius: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: #ffccd5;
+        }
+
+        .select-hint {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+        }
+
+        .select-bottom-dock {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            pointer-events: auto;
+        }
+
+        .roster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .char-card {
+            background: rgba(11, 12, 17, 0.86);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.85rem;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            position: relative;
+            backdrop-filter: blur(12px);
+        }
+
+        .char-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.45);
+            background: rgba(18, 20, 28, 0.92);
+        }
+
+        .char-card.selected-p1 {
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 0 22px rgba(59, 130, 246, 0.45);
+        }
+
+        .char-card.selected-p2 {
+            border: 2px solid var(--blood-bright);
+            box-shadow: 0 0 22px rgba(255, 30, 60, 0.55);
+        }
+
+        .char-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .badge-p1 { background: var(--accent-blue); color: #fff; }
+        .badge-p2 { background: var(--blood-bright); color: #fff; }
+
+        .char-role {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--blood-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .char-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0.15rem 0 0.35rem;
+        }
+
+        .char-desc {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+            line-height: 1.3;
+        }
+
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.25rem 0.5rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.45rem;
+            border-radius: 7px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.74rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        .stat-item span:first-child { color: var(--text-muted); }
+        .stat-item span:last-child { color: #fff; font-weight: bold; }
+
+        .select-actions {
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blood-red), #6b0413);
+            color: #fff;
+            border: 1px solid #ff4d6d;
+            padding: 0.8rem 2.2rem;
+            border-radius: 10px;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(184, 12, 36, 0.5);
+            transition: all 0.22s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 32px rgba(255, 30, 60, 0.75);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ARENA DE COMBATE 3D (HUD LIMPO PARA VISUALIZAR OS MODELOS 3D LUTANDO) */
+        .battle-hud {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-top: 0.5rem;
+            pointer-events: none;
+        }
+
+        .battle-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 0.45rem 1rem;
+            backdrop-filter: blur(12px);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            pointer-events: auto;
+        }
+
+        .turn-counter {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 0.98rem;
+            color: var(--blood-bright);
+        }
+
+        .initiative-track {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .init-pill {
+            padding: 0.2rem 0.65rem;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid transparent;
+            transition: all 0.25s ease;
+        }
+
+        .init-pill.active-turn {
+            background: rgba(184, 12, 36, 0.35);
+            border-color: var(--blood-bright);
+            color: #fff;
+            box-shadow: 0 0 12px var(--blood-glow);
+        }
+
+        /* Cards Compactos de Status nas Bordas Superiores para deixar o Centro 3D Livre */
+        .fighters-hud-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-top: 0.6rem;
+            pointer-events: none;
+        }
+
+        @media (max-width: 760px) {
+            .fighters-hud-row {
+                flex-direction: column;
+            }
+        }
+
+        .fighter-panel {
+            width: 340px;
+            max-width: 100%;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 0.85rem 1rem;
+            backdrop-filter: blur(12px);
+            position: relative;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            pointer-events: auto;
+        }
+
+        .fighter-panel.is-turn {
+            border-color: var(--blood-bright);
+            box-shadow: 0 0 25px rgba(255, 30, 60, 0.32);
+        }
+
+        .fighter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.45rem;
+        }
+
+        .fighter-player-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.18rem 0.45rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hp-label {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .hp-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 0.55rem;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7a0616, #e61938);
+            width: 100%;
+            transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .hp-bar-fill.low-hp {
+            background: linear-gradient(90deg, #4a0000, #ff0022);
+            animation: pulseHp 0.8s infinite;
+        }
+
+        @keyframes pulseHp {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+        }
+
+        .live-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.35rem;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.74rem;
+        }
+
+        .live-stat-box {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.28rem 0.15rem;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .live-stat-box small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.62rem;
+        }
+
+        .buff-positive { color: #4ade80 !important; }
+        .buff-negative { color: #f87171 !important; }
+
+        .status-effects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            min-height: 22px;
+            margin-top: 0.45rem;
+        }
+
+        .effect-chip {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        .effect-buff {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.55);
+            color: #86efac;
+        }
+
+        .effect-debuff {
+            background: rgba(239, 68, 68, 0.24);
+            border: 1px solid rgba(239, 68, 68, 0.6);
+            color: #fca5a5;
+        }
+
+        /* Números Flutuantes sobre os Painéis */
+        .floating-number {
+            position: absolute;
+            top: 85%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 1.75rem;
+            pointer-events: none;
+            z-index: 30;
+            text-shadow: 0 2px 10px #000, 0 0 15px rgba(0,0,0,0.95);
+            animation: floatUp 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            white-space: nowrap;
+        }
+
+        .float-dmg { color: #ff2a4b; }
+        .float-crit { color: #ffd166; font-size: 2.2rem; }
+        .float-heal { color: #4ade80; }
+        .float-buff { color: #60a5fa; font-size: 1.15rem; }
+
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translate(-50%, 0px) scale(0.75); }
+            20% { opacity: 1; transform: translate(-50%, 15px) scale(1.15); }
+            100% { opacity: 0; transform: translate(-50%, 55px) scale(0.95); }
+        }
+
+        /* Dock Inferior de Habilidades + Roteiro */
+        .battle-bottom-grid {
+            display: grid;
+            grid-template-columns: 1.45fr 1fr;
+            gap: 0.85rem;
+            margin-top: auto;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 900px) {
+            .battle-bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .skills-panel, .log-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 0.9rem 1rem;
+            backdrop-filter: blur(14px);
+        }
+
+        .panel-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.65rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.65rem;
+        }
+
+        @media (max-width: 600px) {
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .skill-btn {
+            background: linear-gradient(160deg, rgba(26, 29, 39, 0.92), rgba(12, 13, 18, 0.96));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 0.75rem;
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-btn:hover:not(:disabled) {
+            border-color: var(--blood-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(184, 12, 36, 0.35);
+        }
+
+        .skill-btn:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+        }
+
+        .skill-type {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--blood-bright);
+            text-transform: uppercase;
+            margin-bottom: 0.2rem;
+        }
+
+        .skill-name {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 0.92rem;
+            margin-bottom: 0.3rem;
+            color: #fff;
+        }
+
+        .skill-desc {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .cooldown-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 6, 9, 0.86);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.84rem;
+            color: #fca5a5;
+            font-weight: bold;
+        }
+
+        .combat-log {
+            height: 135px;
+            overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.38rem;
+            padding-right: 0.35rem;
+        }
+
+        .combat-log::-webkit-scrollbar { width: 4px; }
+        .combat-log::-webkit-scrollbar-thumb { background: var(--blood-bright); border-radius: 4px; }
+
+        .log-entry {
+            padding: 0.38rem 0.6rem;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.04);
+            border-left: 3px solid var(--steel-gray);
+            line-height: 1.3;
+        }
+
+        .log-entry.log-crit {
+            border-left-color: #ffd166;
+            background: rgba(255, 209, 102, 0.1);
+        }
+
+        .log-entry.log-ghost {
+            border-left-color: var(--blood-bright);
+            background: rgba(184, 12, 36, 0.14);
+        }
+
+        .log-entry.log-system {
+            border-left-color: var(--accent-blue);
+            color: #93c5fd;
+        }
+
+        /* Modal de Fim de Jogo */
+        #gameover-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 4, 7, 0.86);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        #gameover-modal.active {
+            display: flex;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .gameover-card {
+            background: linear-gradient(160deg, #151720, #08090c);
+            border: 1px solid var(--blood-bright);
+            border-radius: 20px;
+            padding: 2.2rem 1.8rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 0 65px rgba(184, 12, 36, 0.55);
+        }
+
+        .gameover-subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--blood-bright);
+            letter-spacing: 0.2em;
+            font-size: 0.82rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .gameover-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.9rem;
+            color: #fff;
+        }
+
+        .gameover-quote {
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 1.8rem;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .gameover-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Palco 3D Único de Alta Fidelidade (Modelos 3D Articulados, Asfalto Molhado, Chuva e Sangue) -->
+    <canvas id="world-canvas"></canvas>
+    <div class="crt-overlay"></div>
+    <div id="blood-lens-overlay"></div>
+    <div id="screen-flash"></div>
+
+    <div id="app">
+        <header>
+            <div class="brand">
+                <div class="vhs-badge">● REC 3D</div>
+                <h1>SCREAM <span>WOODSBORO</span></h1>
+            </div>
+            <div class="header-controls">
+                <button id="btn-sound" class="btn-icon" title="Ativar/Desativar Áudio">
+                    <span id="sound-icon">🔊</span> <span id="sound-text">SOM ON</span>
+                </button>
+                <button id="btn-home" class="btn-icon" style="display: none;">
+                    ⌂ MENU
+                </button>
+            </div>
+        </header>
+
+        <!-- TELA 1: MENU PRINCIPAL -->
+        <section id="screen-menu" class="screen active">
+            <div class="menu-hero">
+                <div class="phone-caller-box">
+                    <div class="caller-id">☎ CHAMADA DESCONHECIDA • WOODSBORO, CA</div>
+                    <div class="quote-text" id="dynamic-quote">"Qual é o seu filme de terror favorito?"</div>
+                </div>
+
+                <div class="mode-cards">
+                    <div class="mode-card" onclick="selectGameMode('pve')">
+                        <span class="mode-tag">Sobrevivência 3D • 1 Jogador</span>
+                        <h2>Treino / PvE</h2>
+                        <p>Enfrente a IA em um duelo brutal em 3D. Escolha qualquer sobrevivente ou encarne o próprio Ghostface.</p>
+                    </div>
+                    <div class="mode-card" onclick="selectGameMode('pvp')">
+                        <span class="mode-tag">Duelo Local • 2 Jogadores</span>
+                        <h2>PvP 1v1 Local</h2>
+                        <p>Dois jogadores na mesma tela. Cada um escolhe seu modelo 3D articulado para um confronto sangrento em turnos.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA 2: SELEÇÃO DE PERSONAGENS COM INSPEÇÃO 3D -->
+        <section id="screen-select" class="screen">
+            <div class="select-layout">
+                <div class="select-header">
+                    <h2>ESCOLHA SEU PERSONAGEM</h2>
+                    <div class="select-turn-indicator" id="select-prompt">JOGADOR 1: Selecione seu lutador</div>
+                    <div class="select-hint">Arraste o mouse no cenário para girar a câmera 3D</div>
+                </div>
+
+                <div class="select-bottom-dock">
+                    <div class="roster-grid" id="roster-container"></div>
+                    <div class="select-actions">
+                        <button id="btn-start-match" class="btn-primary" disabled onclick="startBattle()">
+                            INICIAR MASSACRE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA 3: ARENA DE COMBATE 3D -->
+        <section id="screen-battle" class="screen">
+            <div class="battle-hud">
+                <div>
+                    <div class="battle-top-bar">
+                        <div class="turn-counter" id="round-display">CENA 1 • TURNO 1</div>
+                        <div class="initiative-track" id="initiative-bar"></div>
+                    </div>
+
+                    <div class="fighters-hud-row">
+                        <!-- HUD Lutador 1 -->
+                        <div class="fighter-panel" id="panel-p1">
+                            <div class="fighter-header">
+                                <div>
+                                    <div class="char-role" id="p1-role">SOBREVIVENTE</div>
+                                    <h3 class="char-name" id="p1-name">Sidney Prescott</h3>
+                                </div>
+                                <span class="fighter-player-tag" id="p1-tag">JOGADOR 1</span>
+                            </div>
+
+                            <div class="hp-label">
+                                <span>VITALIDADE</span>
+                                <span id="p1-hp-text">130 / 130</span>
+                            </div>
+                            <div class="hp-bar-bg">
+                                <div class="hp-bar-fill" id="p1-hp-bar"></div>
+                            </div>
+
+                            <div class="live-stats-row">
+                                <div class="live-stat-box"><small>ATK</small><span id="p1-stat-atk">20</span></div>
+                                <div class="live-stat-box"><small>DEF</small><span id="p1-stat-def">10</span></div>
+                                <div class="live-stat-box"><small>INI</small><span id="p1-stat-ini">15</span></div>
+                                <div class="live-stat-box"><small>CRIT</small><span id="p1-stat-crit">18%</span></div>
+                            </div>
+
+                            <div class="status-effects" id="p1-effects"></div>
+                        </div>
+
+                        <!-- HUD Lutador 2 -->
+                        <div class="fighter-panel" id="panel-p2">
+                            <div class="fighter-header">
+                                <div>
+                                    <div class="char-role" id="p2-role">ASSASSINO</div>
+                                    <h3 class="char-name" id="p2-name">Ghostface</h3>
+                                </div>
+                                <span class="fighter-player-tag" id="p2-tag">IA TÁTICA</span>
+                            </div>
+
+                            <div class="hp-label">
+                                <span>VITALIDADE</span>
+                                <span id="p2-hp-text">115 / 115</span>
+                            </div>
+                            <div class="hp-bar-bg">
+                                <div class="hp-bar-fill" id="p2-hp-bar"></div>
+                            </div>
+
+                            <div class="live-stats-row">
+                                <div class="live-stat-box"><small>ATK</small><span id="p2-stat-atk">24</span></div>
+                                <div class="live-stat-box"><small>DEF</small><span id="p2-stat-def">6</span></div>
+                                <div class="live-stat-box"><small>INI</small><span id="p2-stat-ini">18</span></div>
+                                <div class="live-stat-box"><small>CRIT</small><span id="p2-stat-crit">25%</span></div>
+                            </div>
+
+                            <div class="status-effects" id="p2-effects"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel Inferior de Ações e Roteiro -->
+                <div class="battle-bottom-grid">
+                    <div class="skills-panel">
+                        <div class="panel-title">
+                            <span id="active-actor-prompt">VEZ DE SIDNEY PRESCOTT</span>
+                            <span>ESCOLHA SUA AÇÃO</span>
+                        </div>
+                        <div class="skills-grid" id="skills-container"></div>
+                    </div>
+
+                    <div class="log-panel">
+                        <div class="panel-title">
+                            <span>ROTEIRO DA CENA</span>
+                            <span>ARRASTE P/ GIRAR CÂMERA</span>
+                        </div>
+                        <div class="combat-log" id="combat-log"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL DE FIM DE JOGO -->
+    <div id="gameover-modal">
+        <div class="gameover-card">
+            <div class="gameover-subtitle" id="gameover-sub">CRÉDITOS FINAIS</div>
+            <h2 class="gameover-title" id="gameover-winner">SIDNEY SOBREVIVEU</h2>
+            <p class="gameover-quote" id="gameover-quote">"Nos filmes de terror, os sobreviventes sempre voltam para a sequência."</p>
+            <div class="gameover-buttons">
+                <button class="btn-primary" onclick="rematch()">REVANCHE</button>
+                <button class="btn-icon" onclick="returnToMenu()">TROCAR PERSONAGENS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * 1. ÁUDIO VISCERAL PROCEDURAL (WEB AUDIO API)
+         * Lâmina cortando carne, impactos brutais, tiros, trovões e batimento cardíaco
+         * ============================================================================
+         */
+        class SlasherAudio {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.heartbeatTimer = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (this.muted) this.stopHeartbeat();
+                return this.muted;
+            }
+
+            playPhoneRing() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                for (let i = 0; i < 2; i++) {
+                    const start = now + i * 0.45;
+                    const osc1 = this.ctx.createOscillator();
+                    const osc2 = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    osc1.frequency.setValueAtTime(440, start);
+                    osc2.frequency.setValueAtTime(480, start);
+                    gain.gain.setValueAtTime(0.09, start);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc1.start(start);
+                    osc2.start(start);
+                    osc1.stop(start + 0.36);
+                    osc2.stop(start + 0.36);
+                }
+            }
+
+            // Som visceral de lâmina metálica + perfuração de carne
+            playVisceralSlash(isCrit = false) {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+
+                // 1. Silvo metálico agudo da Buck 120
+                const metalOsc = this.ctx.createOscillator();
+                const metalGain = this.ctx.createGain();
+                metalOsc.type = 'sawtooth';
+                metalOsc.frequency.setValueAtTime(isCrit ? 2800 : 2100, now);
+                metalOsc.frequency.exponentialRampToValueAtTime(420, now + 0.22);
+                metalGain.gain.setValueAtTime(0.14, now);
+                metalGain.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
+                metalOsc.connect(metalGain);
+                metalGain.connect(this.ctx.destination);
+                metalOsc.start(now);
+                metalOsc.stop(now + 0.24);
+
+                // 2. Ruído orgânico de corte / rasgo
+                const bufferSize = this.ctx.sampleRate * 0.32;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.09));
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(isCrit ? 1100 : 850, now);
+                filter.Q.value = 1.8;
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(isCrit ? 0.55 : 0.35, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start(now);
+
+                // 3. Golpe sub-grave brutal no peito
+                const sub = this.ctx.createOscillator();
+                const subGain = this.ctx.createGain();
+                sub.type = 'triangle';
+                sub.frequency.setValueAtTime(isCrit ? 155 : 115, now);
+                sub.frequency.exponentialRampToValueAtTime(28, now + 0.38);
+                subGain.gain.setValueAtTime(isCrit ? 0.55 : 0.3, now);
+                subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                sub.connect(subGain);
+                subGain.connect(this.ctx.destination);
+                sub.start(now);
+                sub.stop(now + 0.41);
+            }
+
+            // Disparo seco com eco noturno
+            playGunshot() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.55;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.09));
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(2400, now);
+                filter.frequency.exponentialRampToValueAtTime(140, now + 0.5);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.6, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start(now);
+            }
+
+            playBuff() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(640, now + 0.28);
+                gain.gain.setValueAtTime(0.14, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.31);
+            }
+
+            playThunder() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 1.4;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.45));
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(160, now);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start(now);
+            }
+
+            playTerrorStinger() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                [110, 116.5, 220, 233].forEach(freq => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc.frequency.linearRampToValueAtTime(freq * 0.82, now + 1.1);
+                    gain.gain.setValueAtTime(0.075, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.15);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 1.2);
+                });
+            }
+
+            startHeartbeat() {
+                if (this.heartbeatTimer || this.muted) return;
+                this.heartbeatTimer = setInterval(() => {
+                    if (this.muted) return;
+                    this.init();
+                    const now = this.ctx.currentTime;
+                    [0, 0.18].forEach((offset, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(idx === 0 ? 68 : 54, now + offset);
+                        osc.frequency.exponentialRampToValueAtTime(28, now + offset + 0.14);
+                        gain.gain.setValueAtTime(0.22, now + offset);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.15);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + offset);
+                        osc.stop(now + offset + 0.16);
+                    });
+                }, 750);
+            }
+
+            stopHeartbeat() {
+                if (this.heartbeatTimer) {
+                    clearInterval(this.heartbeatTimer);
+                    this.heartbeatTimer = null;
+                }
+            }
+        }
+
+        const sfx = new SlasherAudio();
+
+        /**
+         * ============================================================================
+         * 2. ELENCO DE PERSONAGENS BALANCEADOS DO UNIVERSO PÂNICO
+         * ============================================================================
+         */
+        const CHARACTERS = [
+            {
+                id: 'ghostface',
+                name: 'Ghostface',
+                role: 'O Assassino de Woodsboro',
+                desc: 'Predador letal das sombras. Alta iniciativa, sangramento profundo e golpes críticos brutais com sua faca Buck 120.',
+                stats: { hp: 115, atk: 24, ini: 18, def: 6, crit: 25 },
+                winQuote: '"Você nunca deveria ter atendido o telefone..."',
+                skills: [
+                    {
+                        id: 'basic',
+                        type: 'Ataque Básico',
+                        name: 'Estocada Buck 120',
+                        desc: 'Golpe rápido e profundo de faca. Causa dano físico direto e respinga sangue.',
+                        cooldown: 0,
+                        kind: 'damage',
+                        mult: 1.0,
+                        sound: 'slash'
+                    },
+                    {
+                        id: 'alt',
+                        type: 'Ataque Alternativo',
+                        name: 'Ligação Ameaça',
+                        desc: 'Terror psicológico: causa 65% de dano e reduz DEF (-4) e INI (-4) do alvo por 2 turnos.',
+                        cooldown: 2,
+                        kind: 'debuff_attack',
+                        mult: 0.65,
+                        debuff: { def: -4, ini: -4, duration: 2, label: 'Aterrorizado' },
+                        sound: 'phone'
+                    },
+                    {
+                        id: 'special',
+                        type: 'Ataque Especial',
+                        name: 'Execução Furtiva',
+                        desc: 'Golpe visceral com +40% de crítico, ignora 50% da armadura e aplica Sangramento (7/turno).',
+                        cooldown: 3,
+                        kind: 'special_bleed',
+                        mult: 1.4,
+                        bonusCrit: 40,
+                        armorPierce: 0.5,
+                        bleed: 7,
+                        sound: 'slash'
+                    }
+                ]
+            },
+            {
+                id: 'sidney',
+                name: 'Sidney Prescott',
+                role: 'A Final Girl Suprema',
+                desc: 'Sobrevivente implacável. Equilíbrio letal entre defesa tática, cura de emergência e contra-ataques.',
+                stats: { hp: 130, atk: 20, ini: 15, def: 10, crit: 18 },
+                winQuote: '"Não na minha história. Eu nunca morri."',
+                skills: [
+                    {
+                        id: 'basic',
+                        type: 'Ataque Básico',
+                        name: 'Golpe Improvisado',
+                        desc: 'Ataque firme e calculado contra o agressor.',
+                        cooldown: 0,
+                        kind: 'damage',
+                        mult: 1.0,
+                        sound: 'slash'
+                    },
+                    {
+                        id: 'alt',
+                        type: 'Ataque Alternativo',
+                        name: 'Instinto de Sobrevivência',
+                        desc: 'Estanca ferimentos (+24 HP) e ergue a guarda (+6 DEF por 2 turnos).',
+                        cooldown: 2,
+                        kind: 'self_buff_heal',
+                        heal: 24,
+                        buff: { def: 6, duration: 2, label: 'Guarda Alta' },
+                        sound: 'buff'
+                    },
+                    {
+                        id: 'special',
+                        type: 'Ataque Especial',
+                        name: 'Tiro na Cabeça',
+                        desc: 'Disparo preciso de pistola (150% ATK) e reduz Iniciativa inimiga em -6 por 2 turnos.',
+                        cooldown: 3,
+                        kind: 'debuff_attack',
+                        mult: 1.5,
+                        debuff: { ini: -6, duration: 2, label: 'Atordoado' },
+                        sound: 'gun'
+                    }
+                ]
+            },
+            {
+                id: 'gale',
+                name: 'Gale Weathers',
+                role: 'A Repórter Implacável',
+                desc: 'Ágil e oportunista. Usa flash de câmera para cegar o assassino e pune alvos debilitados.',
+                stats: { hp: 110, atk: 21, ini: 19, def: 7, crit: 22 },
+                winQuote: '"Isso vai direto para a capa do meu próximo livro!"',
+                skills: [
+                    {
+                        id: 'basic',
+                        type: 'Ataque Básico',
+                        name: 'Golpe com Microfone',
+                        desc: 'Investida veloz aproveitando sua alta iniciativa.',
+                        cooldown: 0,
+                        kind: 'damage',
+                        mult: 1.0,
+                        sound: 'slash'
+                    },
+                    {
+                        id: 'alt',
+                        type: 'Ataque Alternativo',
+                        name: 'Flash Estroboscópico',
+                        desc: 'Cega o alvo: 60% de dano, reduz ATK (-5) e Crítico (-15%) por 2 turnos.',
+                        cooldown: 2,
+                        kind: 'debuff_attack',
+                        mult: 0.6,
+                        debuff: { atk: -5, crit: -15, duration: 2, label: 'Cegado' },
+                        sound: 'gun'
+                    },
+                    {
+                        id: 'special',
+                        type: 'Ataque Especial',
+                        name: 'Furo Sangrento',
+                        desc: 'Causa 135% de dano, subindo para 190% se o oponente estiver sob qualquer debuff!',
+                        cooldown: 3,
+                        kind: 'punish_debuff',
+                        mult: 1.35,
+                        bonusMult: 1.9,
+                        sound: 'slash'
+                    }
+                ]
+            },
+            {
+                id: 'dewey',
+                name: 'Dewey Riley',
+                role: 'O Xerife Protetor',
+                desc: 'Veterano de Woodsboro. Alta vitalidade e colete balístico para absorver golpes mortais.',
+                stats: { hp: 145, atk: 18, ini: 11, def: 14, crit: 12 },
+                winQuote: '"A lei chegou em Woodsboro, palhaço."',
+                skills: [
+                    {
+                        id: 'basic',
+                        type: 'Ataque Básico',
+                        name: 'Golpe de Lanterna',
+                        desc: 'Impacto contundente com lanterna tática policial.',
+                        cooldown: 0,
+                        kind: 'damage',
+                        mult: 1.0,
+                        sound: 'slash'
+                    },
+                    {
+                        id: 'alt',
+                        type: 'Ataque Alternativo',
+                        name: 'Colete Balístico',
+                        desc: 'Postura defensiva: +9 de Defesa e +4 de Ataque por 2 turnos.',
+                        cooldown: 2,
+                        kind: 'self_buff',
+                        buff: { def: 9, atk: 4, duration: 2, label: 'Colete Ativo' },
+                        sound: 'buff'
+                    },
+                    {
+                        id: 'special',
+                        type: 'Ataque Especial',
+                        name: 'Calibre .38 à Queima-Roupa',
+                        desc: 'Disparo brutal (155% ATK) que ignora 60% da defesa inimiga.',
+                        cooldown: 3,
+                        kind: 'special_pierce',
+                        mult: 1.55,
+                        bonusCrit: 15,
+                        armorPierce: 0.6,
+                        sound: 'gun'
+                    }
+                ]
+            },
+            {
+                id: 'randy',
+                name: 'Randy Meeks',
+                role: 'O Especialista em Regras',
+                desc: 'Conhece todos os clichês de terror. Manipula chances de crítico e vira o jogo no terceiro ato.',
+                stats: { hp: 105, atk: 22, ini: 17, def: 6, crit: 28 },
+                winQuote: '"Regra número 1: nunca ache que o assassino está morto!"',
+                skills: [
+                    {
+                        id: 'basic',
+                        type: 'Ataque Básico',
+                        name: 'Golpe com Lanterna VHS',
+                        desc: 'Ataque rápido com alta probabilidade de acerto crítico.',
+                        cooldown: 0,
+                        kind: 'damage',
+                        mult: 1.0,
+                        sound: 'slash'
+                    },
+                    {
+                        id: 'alt',
+                        type: 'Ataque Alternativo',
+                        name: 'As Regras do Terror',
+                        desc: 'Prevê o assassino: ganha +35% de Crítico e +5 de Iniciativa por 2 turnos.',
+                        cooldown: 2,
+                        kind: 'self_buff',
+                        buff: { crit: 35, ini: 5, duration: 2, label: 'Regras Ativas' },
+                        sound: 'buff'
+                    },
+                    {
+                        id: 'special',
+                        type: 'Ataque Especial',
+                        name: 'Reviravolta do 3º Ato',
+                        desc: 'Ataque desesperado (150% ATK) com multiplicador crítico brutal de 2.1x!',
+                        cooldown: 3,
+                        kind: 'chaos_crit',
+                        mult: 1.5,
+                        critMultiplier: 2.1,
+                        sound: 'slash'
+                    }
+                ]
+            }
+        ];
+
+        /**
+         * ============================================================================
+         * 3. ENGINE 3D REALISTA EM THREE.JS (PBR, SOMBRAS, MODELOS ARTICULADOS, SANGUE)
+         * ============================================================================
+         */
+        let scene, camera, renderer;
+        let rainGeo, rainSystem;
+        let streetLampLight, lightningLight;
+        let bloodParticles = [];
+        let bloodPuddles = [];
+        let timeScale = 1.0; // Para Slow-Motion cinematográfico em críticos
+        let cameraShake = 0;
+
+        // Controle interativo da câmera orbital
+        let camAngle = 0;
+        let isDraggingCam = false;
+        let prevMouseX = 0;
+
+        // Grupos de modelos 3D na cena
+        let showcaseGroup = new THREE.Group();
+        let arenaGroup = new THREE.Group();
+        let fighterRigs = { p1: null, p2: null };
+
+        // Gerador procedural de mapas Normais e Rugosidade para realismo PBR
+        function createNoiseNormalMap(intensity = 1.0) {
+            const size = 128;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const img = ctx.createImageData(size, size);
+            for (let i = 0; i < img.data.length; i += 4) {
+                const n = 128 + (Math.random() - 0.5) * 45 * intensity;
+                img.data[i] = n;
+                img.data[i + 1] = n;
+                img.data[i + 2] = 255;
+                img.data[i + 3] = 255;
+            }
+            ctx.putImageData(img, 0, 0);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(4, 4);
+            return tex;
+        }
+
+        const fabricNormal = createNoiseNormalMap(1.2);
+        const asphaltNormal = createNoiseNormalMap(2.5);
+
+        function init3DWorld() {
+            const canvas = document.getElementById('world-canvas');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050609, 0.036);
+
+            camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 200);
+            camera.position.set(0, 2.35, 7.6);
+            camera.lookAt(0, 1.35, 0);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.15;
+
+            // Iluminação Realista Noturna de Woodsboro
+            const hemiLight = new THREE.HemisphereLight(0x3a527a, 0x09080c, 0.75);
+            scene.add(hemiLight);
+
+            // Luz da Lua Direcional com Sombras Reais
+            const moonLight = new THREE.DirectionalLight(0x88b0f0, 1.9);
+            moonLight.position.set(-8, 16, 10);
+            moonLight.castShadow = true;
+            moonLight.shadow.mapSize.width = 2048;
+            moonLight.shadow.mapSize.height = 2048;
+            moonLight.shadow.camera.near = 1;
+            moonLight.shadow.camera.far = 45;
+            const d = 10;
+            moonLight.shadow.camera.left = -d;
+            moonLight.shadow.camera.right = d;
+            moonLight.shadow.camera.top = d;
+            moonLight.shadow.camera.bottom = -d;
+            moonLight.shadow.bias = -0.0005;
+            scene.add(moonLight);
+
+            // Luz de Poste de Rua Alaranjada/Fria Piscante à Esquerda
+            streetLampLight = new THREE.SpotLight(0xffb469, 2.4, 24, Math.PI / 4, 0.5, 1.2);
+            streetLampLight.position.set(-5.5, 6.5, 2.5);
+            streetLampLight.castShadow = true;
+            scene.add(streetLampLight);
+
+            // Luz de Contorno Vermelho-Sangue Cinematográfica
+            const rimRed = new THREE.PointLight(0xd90429, 2.6, 18);
+            rimRed.position.set(3.5, 2.2, -3.5);
+            scene.add(rimRed);
+
+            // Flash de Relâmpago Distantes
+            lightningLight = new THREE.PointLight(0xcce0ff, 0, 80);
+            lightningLight.position.set(0, 18, -15);
+            scene.add(lightningLight);
+
+            // Chão de Asfalto Molhado de Woodsboro com Reflexos PBR
+            const groundGeo = new THREE.PlaneGeometry(80, 80);
+            const groundMat = new THREE.MeshStandardMaterial({
+                color: 0x0e1015,
+                roughness: 0.22,
+                metalness: 0.65,
+                normalMap: asphaltNormal,
+                normalScale: new THREE.Vector2(0.4, 0.4)
+            });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Poste de Rua 3D + Cerca de Madeira + Árvores de Woodsboro
+            buildEnvironmentProps();
+
+            // Sistema de Chuva 3D Densa
+            const rainCount = 2200;
+            rainGeo = new THREE.BufferGeometry();
+            const pos = new Float32Array(rainCount * 3);
+            for (let i = 0; i < rainCount * 3; i += 3) {
+                pos[i] = (Math.random() - 0.5) * 36;
+                pos[i + 1] = Math.random() * 22;
+                pos[i + 2] = (Math.random() - 0.5) * 32;
+            }
+            rainGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const rainMat = new THREE.PointsMaterial({
+                color: 0xa2bce8,
+                size: 0.08,
+                transparent: true,
+                opacity: 0.55
+            });
+            rainSystem = new THREE.Points(rainGeo, rainMat);
+            scene.add(rainSystem);
+
+            scene.add(showcaseGroup);
+            scene.add(arenaGroup);
+
+            // Monta palco inicial com Ghostface em destaque no menu
+            setupMenuShowcase();
+
+            // Eventos de arraste para girar a câmera 3D
+            canvas.addEventListener('mousedown', e => {
+                isDraggingCam = true;
+                prevMouseX = e.clientX;
+            });
+            window.addEventListener('mouseup', () => isDraggingCam = false);
+            window.addEventListener('mousemove', e => {
+                if (!isDraggingCam) return;
+                const delta = e.clientX - prevMouseX;
+                prevMouseX = e.clientX;
+                camAngle += delta * 0.007;
+                camAngle = Math.max(-0.85, Math.min(0.85, camAngle));
+            });
+
+            canvas.addEventListener('touchstart', e => {
+                isDraggingCam = true;
+                prevMouseX = e.touches[0].clientX;
+            }, { passive: true });
+            window.addEventListener('touchend', () => isDraggingCam = false);
+            window.addEventListener('touchmove', e => {
+                if (!isDraggingCam) return;
+                const delta = e.touches[0].clientX - prevMouseX;
+                prevMouseX = e.touches[0].clientX;
+                camAngle += delta * 0.009;
+                camAngle = Math.max(-0.85, Math.min(0.85, camAngle));
+            }, { passive: true });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function buildEnvironmentProps() {
+            // Poste de luz metálico
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x1c2026, metalness: 0.85, roughness: 0.35 });
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.13, 6.8, 12), poleMat);
+            pole.position.set(-5.5, 3.4, 2.5);
+            pole.castShadow = true;
+            scene.add(pole);
+
+            const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.08), poleMat);
+            arm.position.set(-4.9, 6.65, 2.5);
+            scene.add(arm);
+
+            const bulb = new THREE.Mesh(
+                new THREE.SphereGeometry(0.18, 12, 12),
+                new THREE.MeshBasicMaterial({ color: 0xffcf87 })
+            );
+            bulb.position.set(-4.3, 6.55, 2.5);
+            scene.add(bulb);
+
+            // Árvores sombrias de Woodsboro ao redor
+            const barkMat = new THREE.MeshStandardMaterial({ color: 0x0b0c0e, roughness: 0.95 });
+            for (let i = 0; i < 32; i++) {
+                const angle = (i / 32) * Math.PI * 2;
+                const radius = 10 + Math.random() * 14;
+                const h = 10 + Math.random() * 6;
+                const tree = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.45, h, 8), barkMat);
+                tree.position.set(Math.cos(angle) * radius, h / 2, Math.sin(angle) * radius - 3);
+                tree.rotation.z = (Math.random() - 0.5) * 0.07;
+                tree.castShadow = true;
+                scene.add(tree);
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 4. CONSTRUTOR DE MODELOS 3D HUMANOS ARTICULADOS (PBR REALISTA)
+         * ============================================================================
+         */
+        function buildCharacter3DRig(charId) {
+            const root = new THREE.Group();
+
+            // Pivô do corpo inteiro (para inclinação, queda ao morrer, etc.)
+            const bodyPivot = new THREE.Group();
+            root.add(bodyPivot);
+
+            // Materiais PBR específicos de cada personagem
+            const skinMat = new THREE.MeshStandardMaterial({
+                color: 0xd9a78b,
+                roughness: 0.55,
+                metalness: 0.05
+            });
+
+            const bloodMat = new THREE.MeshStandardMaterial({
+                color: 0x8a0312,
+                roughness: 0.15,
+                metalness: 0.2
+            });
+
+            // Definição de vestimenta por personagem
+            let torsoColor = 0x1e293b;
+            let legsColor = 0x111827;
+            let coatRoughness = 0.45;
+            if (charId === 'ghostface') {
+                torsoColor = 0x070709;
+                legsColor = 0x050507;
+                coatRoughness = 0.85;
+            } else if (charId === 'gale') {
+                torsoColor = 0x9e1123; // Blazer vermelho icônico
+                legsColor = 0x14151a;
+                coatRoughness = 0.4;
+            } else if (charId === 'dewey') {
+                torsoColor = 0x6b583e; // Uniforme de Xerife
+                legsColor = 0x3d3222;
+                coatRoughness = 0.65;
+            } else if (charId === 'randy') {
+                torsoColor = 0x1d4ed8; // Jaqueta azul sobre camisa
+                legsColor = 0x1f2937;
+                coatRoughness = 0.7;
+            }
+
+            const clothMat = new THREE.MeshStandardMaterial({
+                color: torsoColor,
+                roughness: coatRoughness,
+                metalness: charId === 'sidney' ? 0.25 : 0.05,
+                normalMap: fabricNormal,
+                normalScale: new THREE.Vector2(0.35, 0.35)
+            });
+
+            const pantsMat = new THREE.MeshStandardMaterial({
+                color: legsColor,
+                roughness: 0.75,
+                normalMap: fabricNormal,
+                normalScale: new THREE.Vector2(0.25, 0.25)
+            });
+
+            const bootMat = new THREE.MeshStandardMaterial({
+                color: 0x0c0d10,
+                roughness: 0.3,
+                metalness: 0.2
+            });
+
+            // --- PERNAS ARTICULADAS ---
+            function createLeg(xOffset) {
+                const hip = new THREE.Group();
+                hip.position.set(xOffset, 0.92, 0);
+
+                const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.46, 12), pantsMat);
+                thigh.position.y = -0.23;
+                thigh.castShadow = true;
+                hip.add(thigh);
+
+                const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.07, 0.44, 12), pantsMat);
+                shin.position.y = -0.66;
+                shin.castShadow = true;
+                hip.add(shin);
+
+                const boot = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.1, 0.26), bootMat);
+                boot.position.set(0, -0.87, 0.05);
+                boot.castShadow = true;
+                hip.add(boot);
+
+                return hip;
+            }
+
+            const leftLeg = createLeg(-0.14);
+            const rightLeg = createLeg(0.14);
+            bodyPivot.add(leftLeg, rightLeg);
+
+            // --- TRONCO / TORSO ---
+            const torsoGroup = new THREE.Group();
+            torsoGroup.position.set(0, 0.94, 0);
+            bodyPivot.add(torsoGroup);
+
+            const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.18, 0.64, 14), clothMat);
+            chest.position.y = 0.32;
+            chest.scale.set(1.15, 1, 0.72);
+            chest.castShadow = true;
+            chest.receiveShadow = true;
+            torsoGroup.add(chest);
+
+            // Manto esvoaçante do Ghostface (túnica longa com pontas rasgadas)
+            if (charId === 'ghostface') {
+                const robe = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.22, 0.44, 1.35, 16, 1, true),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x060608,
+                        roughness: 0.9,
+                        side: THREE.DoubleSide,
+                        normalMap: fabricNormal
+                    })
+                );
+                robe.position.y = -0.15;
+                robe.castShadow = true;
+                torsoGroup.add(robe);
+            }
+
+            // Distintivo dourado do Xerife Dewey
+            if (charId === 'dewey') {
+                const badge = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.045, 0.045, 0.015, 6),
+                    new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.15 })
+                );
+                badge.rotation.x = Math.PI / 2;
+                badge.position.set(-0.12, 0.46, 0.165);
+                torsoGroup.add(badge);
+            }
+
+            // --- CABEÇA E ROSTO / MÁSCARA ---
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 0.68, 0);
+            torsoGroup.add(headGroup);
+
+            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.14, 10), skinMat);
+            neck.position.y = 0.05;
+            headGroup.add(neck);
+
+            if (charId === 'ghostface') {
+                // Capuz negro profundo
+                const hood = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.22, 18, 18),
+                    new THREE.MeshStandardMaterial({ color: 0x050507, roughness: 0.92 })
+                );
+                hood.position.set(0, 0.22, -0.02);
+                hood.scale.set(1.02, 1.22, 1.12);
+                hood.castShadow = true;
+                headGroup.add(hood);
+
+                // Máscara Ghostface Esculpida em 3D (Branco pálido brilhante + feições afundadas)
+                const maskMat = new THREE.MeshStandardMaterial({
+                    color: 0xf4f4f6,
+                    roughness: 0.32,
+                    metalness: 0.05
+                });
+                const mask = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 20), maskMat);
+                mask.position.set(0, 0.21, 0.08);
+                mask.scale.set(0.82, 1.28, 0.85);
+                headGroup.add(mask);
+
+                // Queixo alongado da máscara
+                const chin = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 16), maskMat);
+                chin.rotation.x = Math.PI;
+                chin.position.set(0, 0.05, 0.11);
+                chin.scale.set(0.75, 1, 0.65);
+                headGroup.add(chin);
+
+                // Olhos negros profundos e boca gritando
+                const voidMat = new THREE.MeshBasicMaterial({ color: 0x020203 });
+                const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 12), voidMat);
+                leftEye.position.set(-0.055, 0.24, 0.205);
+                leftEye.scale.set(0.85, 1.35, 0.35);
+                leftEye.rotation.z = 0.28;
+
+                const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 12), voidMat);
+                rightEye.position.set(0.055, 0.24, 0.205);
+                rightEye.scale.set(0.85, 1.35, 0.35);
+                rightEye.rotation.z = -0.28;
+
+                const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.048, 12, 12), voidMat);
+                mouth.position.set(0, 0.11, 0.202);
+                mouth.scale.set(0.58, 1.85, 0.4);
+
+                headGroup.add(leftEye, rightEye, mouth);
+            } else {
+                // Cabeça humana realista dos Sobreviventes
+                const skull = new THREE.Mesh(new THREE.SphereGeometry(0.165, 18, 18), skinMat);
+                skull.position.y = 0.22;
+                skull.scale.set(0.92, 1.12, 0.98);
+                skull.castShadow = true;
+                headGroup.add(skull);
+
+                // Olhos
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+                const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), eyeMat);
+                eyeL.position.set(-0.055, 0.23, 0.15);
+                const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), eyeMat);
+                eyeR.position.set(0.055, 0.23, 0.15);
+                headGroup.add(eyeL, eyeR);
+
+                // Cabelos / Chapéu específicos
+                const hairColor = charId === 'gale' ? 0x5c2314 : (charId === 'randy' ? 0x241c18 : 0x382215);
+                const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.75 });
+                const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.175, 16, 16), hairMat);
+                hairTop.position.set(0, 0.25, -0.02);
+                hairTop.scale.set(0.96, 1.05, 1.02);
+                headGroup.add(hairTop);
+
+                if (charId === 'sidney' || charId === 'gale') {
+                    const backHair = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.34, 12), hairMat);
+                    backHair.position.set(0, 0.12, -0.09);
+                    headGroup.add(backHair);
+                }
+
+                if (charId === 'dewey') {
+                    // Chapéu de Xerife + Bigode
+                    const hatMat = new THREE.MeshStandardMaterial({ color: 0x4a3b28, roughness: 0.8 });
+                    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.02, 20), hatMat);
+                    brim.position.set(0, 0.35, 0.01);
+                    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.17, 0.13, 16), hatMat);
+                    crown.position.set(0, 0.41, 0.01);
+                    const mustache = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.025, 0.03), hairMat);
+                    mustache.position.set(0, 0.17, 0.16);
+                    headGroup.add(brim, crown, mustache);
+                }
+            }
+
+            // --- BRAÇOS ARTICULADOS + ARMAS / ACESSÓRIOS ---
+            function createArm(isRight) {
+                const shoulder = new THREE.Group();
+                shoulder.position.set(isRight ? 0.29 : -0.29, 0.56, 0);
+
+                const armMat = charId === 'ghostface'
+                    ? new THREE.MeshStandardMaterial({ color: 0x060608, roughness: 0.88 })
+                    : clothMat;
+
+                const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.32, 10), armMat);
+                upperArm.position.y = -0.15;
+                upperArm.castShadow = true;
+                shoulder.add(upperArm);
+
+                const elbow = new THREE.Group();
+                elbow.position.set(0, -0.31, 0);
+                shoulder.add(elbow);
+
+                const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.052, 0.3, 10), charId === 'ghostface' ? armMat : skinMat);
+                forearm.position.y = -0.14;
+                forearm.castShadow = true;
+                elbow.add(forearm);
+
+                const handMat = charId === 'ghostface'
+                    ? new THREE.MeshStandardMaterial({ color: 0x111216, roughness: 0.35, metalness: 0.3 }) // Luvas de couro
+                    : skinMat;
+                const hand = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), handMat);
+                hand.position.y = -0.3;
+                elbow.add(hand);
+
+                // Manga esvoaçante do Ghostface
+                if (charId === 'ghostface') {
+                    const drape = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.16, 0.45, 8, 1, true),
+                        new THREE.MeshStandardMaterial({ color: 0x050507, roughness: 0.9, side: THREE.DoubleSide })
+                    );
+                    drape.position.set(0, -0.22, -0.04);
+                    elbow.add(drape);
+                }
+
+                return { shoulder, elbow, hand };
+            }
+
+            const leftArm = createArm(false);
+            const rightArm = createArm(true);
+            torsoGroup.add(leftArm.shoulder, rightArm.shoulder);
+
+            // Equipamento na Mão Direita
+            if (charId === 'ghostface') {
+                // Faca de Caça Buck 120 Cromada com Sangue
+                const knifeGroup = new THREE.Group();
+                knifeGroup.position.set(0, -0.31, 0.04);
+                knifeGroup.rotation.x = Math.PI / 2;
+
+                const handle = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.022, 0.025, 0.14, 10),
+                    new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 })
+                );
+                const guard = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.08, 0.015, 0.03),
+                    new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 })
+                );
+                guard.position.y = 0.07;
+
+                const blade = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.026, 0.28, 4),
+                    new THREE.MeshStandardMaterial({ color: 0xe5e7eb, metalness: 0.95, roughness: 0.1 })
+                );
+                blade.scale.set(0.35, 1, 1.3);
+                blade.position.y = 0.21;
+                blade.castShadow = true;
+
+                // Sangue escorrendo na lâmina
+                const bloodTip = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.027, 0.14, 4),
+                    bloodMat
+                );
+                bloodTip.scale.set(0.38, 1, 1.32);
+                bloodTip.position.y = 0.28;
+
+                knifeGroup.add(handle, guard, blade, bloodTip);
+                rightArm.elbow.add(knifeGroup);
+            } else if (charId === 'sidney' || charId === 'dewey') {
+                // Pistola / Revólver metálico
+                const gunGroup = new THREE.Group();
+                gunGroup.position.set(0, -0.31, 0.05);
+                const gunMat = new THREE.MeshStandardMaterial({ color: 0x2d333b, metalness: 0.85, roughness: 0.25 });
+                const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.045, 0.22), gunMat);
+                barrel.position.z = 0.08;
+                const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.1, 0.045), gunMat);
+                grip.position.set(0, -0.04, 0);
+                grip.rotation.x = 0.25;
+                gunGroup.add(barrel, grip);
+                rightArm.elbow.add(gunGroup);
+            } else if (charId === 'gale') {
+                // Microfone de repórter
+                const micGroup = new THREE.Group();
+                micGroup.position.set(0, -0.31, 0.04);
+                micGroup.rotation.x = Math.PI / 3;
+                const shaft = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.018, 0.015, 0.2, 8),
+                    new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.6, roughness: 0.3 })
+                );
+                const headMic = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.038, 10, 10),
+                    new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.8, roughness: 0.4 })
+                );
+                headMic.position.y = 0.11;
+                micGroup.add(shaft, headMic);
+                rightArm.elbow.add(micGroup);
+            } else if (charId === 'randy') {
+                // Lanterna tática / Fita VHS
+                const flashlight = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.025, 0.02, 0.22, 10),
+                    new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 })
+                );
+                flashlight.rotation.x = Math.PI / 2;
+                flashlight.position.set(0, -0.31, 0.08);
+                rightArm.elbow.add(flashlight);
+            }
+
+            // Manchas de sangue dinâmicas no corpo (ativadas conforme recebe dano!)
+            const woundDecals = [];
+            for (let i = 0; i < 4; i++) {
+                const wound = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.07 + Math.random() * 0.04, 8, 8),
+                    bloodMat
+                );
+                wound.scale.set(1.2, 1.5, 0.35);
+                wound.position.set(
+                    (Math.random() - 0.5) * 0.24,
+                    0.18 + Math.random() * 0.32,
+                    0.14
+                );
+                wound.visible = false;
+                torsoGroup.add(wound);
+                woundDecals.push(wound);
+            }
+
+            // Postura inicial de combate
+            rightArm.shoulder.rotation.x = -0.45;
+            rightArm.elbow.rotation.x = -0.65;
+            leftArm.shoulder.rotation.x = -0.25;
+            leftArm.elbow.rotation.x = -0.4;
+
+            return {
+                root,
+                bodyPivot,
+                torsoGroup,
+                headGroup,
+                leftLeg,
+                rightLeg,
+                leftArm,
+                rightArm,
+                woundDecals,
+                bloodMat,
+                animState: 'idle', // 'idle', 'attack', 'hit', 'dead'
+                animTimer: 0,
+                baseX: 0,
+                targetX: 0
+            };
+        }
+
+        /**
+         * ============================================================================
+         * 5. SISTEMA DE PARTÍCULAS FÍSICAS DE SANGUE E POÇAS NO ASFALTO
+         * ============================================================================
+         */
+        function spawnBloodBurst(worldPos, count = 36, intensity = 1.0) {
+            const geo = new THREE.SphereGeometry(0.032, 6, 6);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0x9e0416,
+                roughness: 0.15,
+                metalness: 0.2
+            });
+
+            for (let i = 0; i < count; i++) {
+                const drop = new THREE.Mesh(geo, mat);
+                drop.position.copy(worldPos);
+                drop.position.y += 1.15 + (Math.random() - 0.5) * 0.45;
+                drop.position.x += (Math.random() - 0.5) * 0.25;
+
+                const speed = (1.8 + Math.random() * 4.2) * intensity;
+                const angle = Math.random() * Math.PI * 2;
+                const vel = new THREE.Vector3(
+                    Math.cos(angle) * speed,
+                    1.5 + Math.random() * 3.8 * intensity,
+                    Math.sin(angle) * speed
+                );
+
+                scene.add(drop);
+                bloodParticles.push({ mesh: drop, vel, life: 2.5 });
+            }
+        }
+
+        function createBloodPuddle(x, z) {
+            const puddleGeo = new THREE.CircleGeometry(0.18 + Math.random() * 0.25, 14);
+            const puddleMat = new THREE.MeshStandardMaterial({
+                color: 0x6b020e,
+                roughness: 0.08,
+                metalness: 0.45,
+                transparent: true,
+                opacity: 0.88
+            });
+            const puddle = new THREE.Mesh(puddleGeo, puddleMat);
+            puddle.rotation.x = -Math.PI / 2;
+            puddle.position.set(x, 0.008, z);
+            arenaGroup.add(puddle);
+            bloodPuddles.push(puddle);
+            if (bloodPuddles.length > 45) {
+                const old = bloodPuddles.shift();
+                arenaGroup.remove(old);
+            }
+        }
+
+        function clearBloodPuddles() {
+            bloodPuddles.forEach(p => arenaGroup.remove(p));
+            bloodPuddles = [];
+        }
+
+        /**
+         * ============================================================================
+         * 6. GERENCIAMENTO DE CENAS 3D (MENU, SELEÇÃO E ARENA DE BATALHA)
+         * ============================================================================
+         */
+        function clearGroup(group) {
+            while (group.children.length > 0) {
+                group.remove(group.children[0]);
+            }
+        }
+
+        function setupMenuShowcase() {
+            clearGroup(showcaseGroup);
+            clearGroup(arenaGroup);
+            fighterRigs.p1 = null;
+            fighterRigs.p2 = null;
+
+            const ghostRig = buildCharacter3DRig('ghostface');
+            ghostRig.root.position.set(0, 0, 1.6);
+            showcaseGroup.add(ghostRig.root);
+            fighterRigs.p1 = ghostRig;
+        }
+
+        function setupSelectShowcase(charId) {
+            clearGroup(showcaseGroup);
+            clearGroup(arenaGroup);
+            fighterRigs.p1 = null;
+            fighterRigs.p2 = null;
+
+            const rig = buildCharacter3DRig(charId || 'ghostface');
+            rig.root.position.set(0, 0, 1.9);
+            showcaseGroup.add(rig.root);
+            fighterRigs.p1 = rig;
+        }
+
+        function setupArena3D(p1Id, p2Id) {
+            clearGroup(showcaseGroup);
+            clearGroup(arenaGroup);
+            clearBloodPuddles();
+
+            const rig1 = buildCharacter3DRig(p1Id);
+            rig1.root.position.set(-1.75, 0, 0.4);
+            rig1.root.rotation.y = Math.PI / 2 - 0.15;
+            rig1.baseX = -1.75;
+            rig1.targetX = -1.75;
+
+            const rig2 = buildCharacter3DRig(p2Id);
+            rig2.root.position.set(1.75, 0, 0.4);
+            rig2.root.rotation.y = -Math.PI / 2 + 0.15;
+            rig2.baseX = 1.75;
+            rig2.targetX = 1.75;
+
+            arenaGroup.add(rig1.root, rig2.root);
+            fighterRigs.p1 = rig1;
+            fighterRigs.p2 = rig2;
+        }
+
+        // Loop de Animação 3D e Física em 60 FPS
+        let lastFrameTime = performance.now();
+        function animate3D(now) {
+            requestAnimationFrame(animate3D);
+            const rawDt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+            const dt = rawDt * timeScale;
+            const t = now * 0.001;
+
+            // Chuva caindo no asfalto
+            if (rainGeo) {
+                const pos = rainGeo.attributes.position.array;
+                for (let i = 1; i < pos.length; i += 3) {
+                    pos[i] -= 18 * dt;
+                    if (pos[i] < 0) pos[i] = 22;
+                }
+                rainGeo.attributes.position.needsUpdate = true;
+            }
+
+            // Luz de poste piscando com falha elétrica + trovões ocasionalmente
+            if (streetLampLight) {
+                const flicker = Math.sin(t * 27) * Math.cos(t * 43);
+                streetLampLight.intensity = flicker > 0.88 ? 0.4 : 2.3 + Math.sin(t * 3) * 0.15;
+            }
+            if (lightningLight) {
+                if (lightningLight.intensity > 0) {
+                    lightningLight.intensity = Math.max(0, lightningLight.intensity - 25 * rawDt);
+                } else if (Math.random() < 0.0018) {
+                    lightningLight.intensity = 6.5;
+                    sfx.playThunder();
+                }
+            }
+
+            // Atualiza animação dos modelos 3D articulados
+            ['p1', 'p2'].forEach((slot, idx) => {
+                const rig = fighterRigs[slot];
+                if (!rig) return;
+
+                // Se estiver no menu ou tela de seleção (showcaseGroup tem filhos)
+                if (showcaseGroup.children.length > 0 && slot === 'p1') {
+                    rig.root.rotation.y = Math.sin(t * 0.7) * 0.45 + camAngle;
+                    rig.torsoGroup.position.y = 0.94 + Math.sin(t * 2.5) * 0.015;
+                    rig.rightArm.shoulder.rotation.x = -0.55 + Math.sin(t * 2.5) * 0.06;
+                    return;
+                }
+
+                // Animações na Arena de Combate
+                rig.animTimer += dt;
+
+                if (rig.animState === 'idle') {
+                    // Respiração tensa e postura de combate
+                    const breath = Math.sin(t * 3.2 + idx);
+                    rig.torsoGroup.position.y = 0.94 + breath * 0.016;
+                    rig.torsoGroup.rotation.x = 0.06 + breath * 0.02;
+                    rig.rightArm.shoulder.rotation.x = -0.48 + breath * 0.06;
+                    rig.leftArm.shoulder.rotation.x = -0.3 - breath * 0.05;
+                    rig.root.position.x += (rig.baseX - rig.root.position.x) * 8 * dt;
+                } else if (rig.animState === 'attack') {
+                    // Investida rápida até o oponente + golpe brutal com braço direito
+                    const p = Math.min(1, rig.animTimer / 0.65);
+                    const dir = slot === 'p1' ? 1 : -1;
+                    const lungeDist = Math.sin(p * Math.PI) * 2.45;
+                    rig.root.position.x = rig.baseX + dir * lungeDist;
+
+                    // Movimento de corte/tiro
+                    if (p < 0.5) {
+                        rig.rightArm.shoulder.rotation.x = -1.65 * (p * 2);
+                        rig.torsoGroup.rotation.y = -0.35 * dir * (p * 2);
+                    } else {
+                        const strikeP = (p - 0.5) * 2;
+                        rig.rightArm.shoulder.rotation.x = -1.65 + strikeP * 1.95;
+                        rig.torsoGroup.rotation.y = 0.45 * dir * Math.sin(strikeP * Math.PI);
+                    }
+
+                    if (p >= 1) {
+                        rig.animState = 'idle';
+                        rig.torsoGroup.rotation.y = 0;
+                    }
+                } else if (rig.animState === 'hit') {
+                    // Recuo violento ao sofrer dano
+                    const p = Math.min(1, rig.animTimer / 0.48);
+                    const dir = slot === 'p1' ? -1 : 1;
+                    rig.root.position.x = rig.baseX + dir * Math.sin(p * Math.PI) * 0.45;
+                    rig.torsoGroup.rotation.x = -0.38 * Math.sin(p * Math.PI);
+                    rig.headGroup.rotation.x = -0.45 * Math.sin(p * Math.PI);
+                    if (p >= 1) {
+                        rig.animState = 'idle';
+                        rig.torsoGroup.rotation.x = 0.06;
+                        rig.headGroup.rotation.x = 0;
+                    }
+                } else if (rig.animState === 'dead') {
+                    // Colapso dramático no asfalto ensanguentado
+                    const p = Math.min(1, rig.animTimer / 0.75);
+                    const dir = slot === 'p1' ? -1 : 1;
+                    rig.bodyPivot.rotation.z = dir * (Math.PI / 2) * p;
+                    rig.bodyPivot.position.y = 0.14 * p;
+                }
+            });
+
+            // Física das gotas de sangue 3D
+            for (let i = bloodParticles.length - 1; i >= 0; i--) {
+                const bp = bloodParticles[i];
+                bp.vel.y -= 13.5 * dt; // Gravidade
+                bp.mesh.position.addScaledVector(bp.vel, dt);
+                bp.life -= dt;
+
+                // Ao atingir o asfalto, forma poça permanente de sangue
+                if (bp.mesh.position.y <= 0.02) {
+                    if (Math.random() < 0.35) {
+                        createBloodPuddle(bp.mesh.position.x, bp.mesh.position.z);
+                    }
+                    scene.remove(bp.mesh);
+                    bloodParticles.splice(i, 1);
+                } else if (bp.life <= 0) {
+                    scene.remove(bp.mesh);
+                    bloodParticles.splice(i, 1);
+                }
+            }
+
+            // Tremor cinematográfico de impacto na câmera
+            let shakeX = 0, shakeY = 0;
+            if (cameraShake > 0) {
+                shakeX = (Math.random() - 0.5) * cameraShake;
+                shakeY = (Math.random() - 0.5) * cameraShake;
+                cameraShake *= Math.pow(0.05, rawDt);
+                if (cameraShake < 0.005) cameraShake = 0;
+            }
+
+            const radius = arenaGroup.children.length > 0 ? 6.6 : 4.6;
+            const targetCamX = Math.sin(camAngle) * radius + Math.sin(t * 0.35) * 0.18 + shakeX;
+            const targetCamZ = Math.cos(camAngle) * radius;
+            const targetCamY = (arenaGroup.children.length > 0 ? 2.15 : 1.75) + Math.cos(t * 0.4) * 0.08 + shakeY;
+
+            camera.position.x += (targetCamX - camera.position.x) * 6 * rawDt;
+            camera.position.y += (targetCamY - camera.position.y) * 6 * rawDt;
+            camera.position.z += (targetCamZ - camera.position.z) * 6 * rawDt;
+            camera.lookAt(0, 1.15, 0.4);
+
+            renderer.render(scene, camera);
+        }
+
+        /**
+         * ============================================================================
+         * 7. LÓGICA DO RPG DE TURNOS, SANGUE PROGRESSIVO E HIT-STOP
+         * ============================================================================
+         */
+        const gameState = {
+            mode: 'pve',
+            selectStep: 1,
+            p1Choice: null,
+            p2Choice: null,
+            round: 1,
+            turnQueue: [],
+            currentTurnIdx: 0,
+            isProcessing: false,
+            fighters: { p1: null, p2: null }
+        };
+
+        const QUOTES = [
+            '"Qual é o seu filme de terror favorito?"',
+            '"Você gosta de filmes assustadores, Sidney?"',
+            '"Nunca diga: Eu já volto!"',
+            '"O sangue sempre revela quem é o assassino em Woodsboro."',
+            '"As regras mudaram na sequência."'
+        ];
+
+        setInterval(() => {
+            const el = document.getElementById('dynamic-quote');
+            if (el) el.textContent = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+        }, 4500);
+
+        document.getElementById('btn-sound').addEventListener('click', () => {
+            const muted = sfx.toggleMute();
+            document.getElementById('sound-icon').textContent = muted ? '🔇' : '🔊';
+            document.getElementById('sound-text').textContent = muted ? 'MUDO' : 'SOM ON';
+        });
+
+        document.getElementById('btn-home').addEventListener('click', returnToMenu);
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            document.getElementById('btn-home').style.display = screenId === 'screen-menu' ? 'none' : 'flex';
+        }
+
+        function selectGameMode(mode) {
+            sfx.playPhoneRing();
+            gameState.mode = mode;
+            gameState.selectStep = 1;
+            gameState.p1Choice = null;
+            gameState.p2Choice = null;
+            camAngle = 0;
+            setupSelectShowcase('ghostface');
+            renderRoster();
+            updateSelectPrompt();
+            switchScreen('screen-select');
+        }
+
+        function renderRoster() {
+            const container = document.getElementById('roster-container');
+            container.innerHTML = '';
+
+            CHARACTERS.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'char-card';
+                if (gameState.p1Choice === char.id) card.classList.add('selected-p1');
+                if (gameState.p2Choice === char.id) card.classList.add('selected-p2');
+
+                let badgeHTML = '';
+                if (gameState.p1Choice === char.id && gameState.p2Choice === char.id) {
+                    badgeHTML = `<div class="char-badge badge-p2">P1 & P2</div>`;
+                } else if (gameState.p1Choice === char.id) {
+                    badgeHTML = `<div class="char-badge badge-p1">JOGADOR 1</div>`;
+                } else if (gameState.p2Choice === char.id) {
+                    badgeHTML = `<div class="char-badge badge-p2">${gameState.mode === 'pve' ? 'IA INIMIGA' : 'JOGADOR 2'}</div>`;
+                }
+
+                card.innerHTML = `
+                    ${badgeHTML}
+                    <div class="char-role">${char.role}</div>
+                    <h3 class="char-name">${char.name}</h3>
+                    <p class="char-desc">${char.desc}</p>
+                    <div class="stats-mini">
+                        <div class="stat-item"><span>VIDA</span><span>${char.stats.hp}</span></div>
+                        <div class="stat-item"><span>ATAQUE</span><span>${char.stats.atk}</span></div>
+                        <div class="stat-item"><span>INICIATIVA</span><span>${char.stats.ini}</span></div>
+                        <div class="stat-item"><span>DEFESA</span><span>${char.stats.def}</span></div>
+                        <div class="stat-item" style="grid-column: span 2;"><span>CRÍTICO</span><span>${char.stats.crit}%</span></div>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => handleCharacterSelect(char.id));
+                container.appendChild(card);
+            });
+        }
+
+        function handleCharacterSelect(charId) {
+            sfx.playBuff();
+            setupSelectShowcase(charId); // Exibe o modelo 3D articulado do personagem selecionado no palco!
+
+            if (gameState.mode === 'pve') {
+                gameState.p1Choice = charId;
+                gameState.p2Choice = charId === 'ghostface' ? 'sidney' : 'ghostface';
+            } else {
+                if (gameState.selectStep === 1) {
+                    gameState.p1Choice = charId;
+                    gameState.selectStep = 2;
+                } else {
+                    gameState.p2Choice = charId;
+                    gameState.selectStep = 1;
+                }
+            }
+            renderRoster();
+            updateSelectPrompt();
+        }
+
+        function updateSelectPrompt() {
+            const prompt = document.getElementById('select-prompt');
+            const startBtn = document.getElementById('btn-start-match');
+
+            if (gameState.mode === 'pve') {
+                if (!gameState.p1Choice) {
+                    prompt.textContent = 'MODO PVE: Clique em um personagem para inspecionar o modelo 3D';
+                    startBtn.disabled = true;
+                } else {
+                    const p1Name = CHARACTERS.find(c => c.id === gameState.p1Choice).name;
+                    const p2Name = CHARACTERS.find(c => c.id === gameState.p2Choice).name;
+                    prompt.textContent = `${p1Name} VS ${p2Name} (IA) — Pronto para o combate!`;
+                    startBtn.disabled = false;
+                }
+            } else {
+                if (!gameState.p1Choice) {
+                    prompt.textContent = 'JOGADOR 1: Selecione seu personagem 3D';
+                    startBtn.disabled = true;
+                } else if (!gameState.p2Choice) {
+                    prompt.textContent = 'JOGADOR 2: Selecione seu personagem 3D';
+                    startBtn.disabled = true;
+                } else {
+                    prompt.textContent = 'AMBOS PRONTOS! Clique em Iniciar Massacre';
+                    startBtn.disabled = false;
+                }
+            }
+        }
+
+        function createFighterInstance(charId, slot) {
+            const template = CHARACTERS.find(c => c.id === charId);
+            return {
+                slot,
+                id: template.id,
+                name: template.name,
+                role: template.role,
+                winQuote: template.winQuote,
+                maxHp: template.stats.hp,
+                hp: template.stats.hp,
+                baseAtk: template.stats.atk,
+                baseIni: template.stats.ini,
+                baseDef: template.stats.def,
+                baseCrit: template.stats.crit,
+                skills: JSON.parse(JSON.stringify(template.skills)),
+                cooldowns: { basic: 0, alt: 0, special: 0 },
+                effects: []
+            };
+        }
+
+        function getEffectiveStats(fighter) {
+            let atk = fighter.baseAtk;
+            let def = fighter.baseDef;
+            let ini = fighter.baseIni;
+            let crit = fighter.baseCrit;
+
+            fighter.effects.forEach(ef => {
+                if (ef.atk) atk += ef.atk;
+                if (ef.def) def += ef.def;
+                if (ef.ini) ini += ef.ini;
+                if (ef.crit) crit += ef.crit;
+            });
+
+            return {
+                atk: Math.max(5, atk),
+                def: Math.max(0, def),
+                ini: Math.max(1, ini),
+                crit: Math.min(95, Math.max(0, crit))
+            };
+        }
+
+        function startBattle() {
+            sfx.playTerrorStinger();
+            sfx.stopHeartbeat();
+            document.getElementById('blood-lens-overlay').style.opacity = '0';
+
+            gameState.round = 1;
+            gameState.isProcessing = false;
+            gameState.fighters.p1 = createFighterInstance(gameState.p1Choice, 'p1');
+            gameState.fighters.p2 = createFighterInstance(gameState.p2Choice, 'p2');
+
+            camAngle = 0;
+            setupArena3D(gameState.p1Choice, gameState.p2Choice);
+
+            document.getElementById('p1-tag').textContent = 'JOGADOR 1';
+            document.getElementById('p2-tag').textContent = gameState.mode === 'pve' ? 'IA TÁTICA' : 'JOGADOR 2';
+
+            const logEl = document.getElementById('combat-log');
+            logEl.innerHTML = '';
+            addLog(`CENA ABERTA: ${gameState.fighters.p1.name} encara ${gameState.fighters.p2.name} sob a chuva de Woodsboro.`, 'log-system');
+
+            switchScreen('screen-battle');
+            startNewRound();
+        }
+
+        function startNewRound() {
+            const s1 = getEffectiveStats(gameState.fighters.p1);
+            const s2 = getEffectiveStats(gameState.fighters.p2);
+
+            const roll1 = s1.ini + Math.random() * 0.5;
+            const roll2 = s2.ini + Math.random() * 0.5;
+
+            gameState.turnQueue = roll1 >= roll2 ? ['p1', 'p2'] : ['p2', 'p1'];
+            gameState.currentTurnIdx = 0;
+
+            updateBattleUI();
+            beginActorTurn();
+        }
+
+        function beginActorTurn() {
+            const activeSlot = gameState.turnQueue[gameState.currentTurnIdx];
+            const actor = gameState.fighters[activeSlot];
+            const rig = fighterRigs[activeSlot];
+
+            // Reduz cooldowns do lutador ativo
+            Object.keys(actor.cooldowns).forEach(k => {
+                if (actor.cooldowns[k] > 0) actor.cooldowns[k]--;
+            });
+
+            // Aplica dano contínuo de Sangramento se houver
+            const bleedEffect = actor.effects.find(e => e.bleed);
+            if (bleedEffect) {
+                const bleedDmg = bleedEffect.bleed;
+                actor.hp = Math.max(0, actor.hp - bleedDmg);
+                if (rig) spawnBloodBurst(rig.root.position, 22, 0.7);
+                spawnFloatingText(document.getElementById(`panel-${activeSlot}`), `SANGRAMENTO -${bleedDmg}`, 'float-dmg');
+                addLog(`${actor.name} perde ${bleedDmg} de HP por hemorragia!`, 'log-ghost');
+                updateBattleUI();
+
+                if (actor.hp <= 0) {
+                    const winnerSlot = activeSlot === 'p1' ? 'p2' : 'p1';
+                    triggerDeath3D(activeSlot);
+                    setTimeout(() => endBattle(gameState.fighters[winnerSlot]), 1200);
+                    return;
+                }
+            }
+
+            updateBattleUI();
+
+            if (gameState.mode === 'pve' && activeSlot === 'p2') {
+                gameState.isProcessing = true;
+                renderSkillsPanel(true);
+                setTimeout(() => executeAITurn(), 1050);
+            } else {
+                gameState.isProcessing = false;
+                renderSkillsPanel(false);
+            }
+        }
+
+        function executeAITurn() {
+            const ai = gameState.fighters.p2;
+            const player = gameState.fighters.p1;
+            const available = ai.skills.filter(s => ai.cooldowns[s.id] === 0);
+
+            let chosen = available[0];
+            const special = available.find(s => s.id === 'special');
+            const alt = available.find(s => s.id === 'alt');
+
+            if (special) {
+                chosen = special;
+            } else if (alt) {
+                if (alt.kind === 'self_buff_heal' && ai.hp < ai.maxHp * 0.72) {
+                    chosen = alt;
+                } else if (alt.kind !== 'self_buff_heal' && player.effects.length === 0) {
+                    chosen = alt;
+                }
+            }
+
+            performSkill('p2', chosen.id);
+        }
+
+        function triggerHitStop(durationMs = 240) {
+            timeScale = 0.14; // Slow-motion dramático no impacto crítico
+            setTimeout(() => {
+                timeScale = 1.0;
+            }, durationMs);
+        }
+
+        function triggerDeath3D(slot) {
+            const rig = fighterRigs[slot];
+            if (rig) {
+                rig.animState = 'dead';
+                rig.animTimer = 0;
+                spawnBloodBurst(rig.root.position, 70, 1.45);
+                for (let i = 0; i < 6; i++) {
+                    createBloodPuddle(
+                        rig.root.position.x + (Math.random() - 0.5) * 0.9,
+                        rig.root.position.z + (Math.random() - 0.5) * 0.9
+                    );
+                }
+            }
+        }
+
+        function performSkill(attackerSlot, skillId) {
+            if (gameState.isProcessing && !(gameState.mode === 'pve' && attackerSlot === 'p2')) return;
+            gameState.isProcessing = true;
+            renderSkillsPanel(true);
+
+            const defenderSlot = attackerSlot === 'p1' ? 'p2' : 'p1';
+            const attacker = gameState.fighters[attackerSlot];
+            const defender = gameState.fighters[defenderSlot];
+            const skill = attacker.skills.find(s => s.id === skillId);
+
+            const atkRig = fighterRigs[attackerSlot];
+            const defRig = fighterRigs[defenderSlot];
+
+            if (skill.cooldown > 0) {
+                attacker.cooldowns[skill.id] = skill.cooldown + 1;
+            }
+
+            const atkStats = getEffectiveStats(attacker);
+            const defStats = getEffectiveStats(defender);
+
+            const attackerPanel = document.getElementById(`panel-${attackerSlot}`);
+            const defenderPanel = document.getElementById(`panel-${defenderSlot}`);
+
+            const isGhost = attacker.id === 'ghostface';
+            const logClass = isGhost ? 'log-ghost' : '';
+
+            // Habilidades de Suporte / Cura / Buff
+            if (skill.kind === 'self_buff_heal' || skill.kind === 'self_buff') {
+                if (skill.sound === 'buff') sfx.playBuff();
+
+                if (skill.heal) {
+                    const healed = Math.min(attacker.maxHp - attacker.hp, skill.heal);
+                    attacker.hp += healed;
+                    spawnFloatingText(attackerPanel, `+${healed} HP`, 'float-heal');
+                    addLog(`${attacker.name} usa ${skill.name} e estanca ferimentos (+${healed} HP)!`, logClass);
+                } else {
+                    spawnFloatingText(attackerPanel, skill.buff.label.toUpperCase(), 'float-buff');
+                    addLog(`${attacker.name} ativa ${skill.name} (${skill.buff.label})!`, logClass);
+                }
+
+                if (skill.buff) {
+                    applyStatusEffect(attacker, { ...skill.buff, type: 'buff' });
+                }
+
+                updateBattleUI();
+                setTimeout(() => endActorTurn(attacker), 950);
+                return;
+            }
+
+            // Habilidades Ofensivas: Dispara animação 3D de investida
+            if (atkRig) {
+                atkRig.animState = 'attack';
+                atkRig.animTimer = 0;
+            }
+
+            // Sincroniza o impacto no auge do golpe 3D (320ms)
+            setTimeout(() => {
+                let mult = skill.mult || 1.0;
+                if (skill.kind === 'punish_debuff' && defender.effects.some(e => e.type === 'debuff')) {
+                    mult = skill.bonusMult;
+                    addLog(`OPORTUNIDADE MORTAL! ${attacker.name} explora a fraqueza de ${defender.name}!`, 'log-crit');
+                }
+
+                const critChance = atkStats.crit + (skill.bonusCrit || 0);
+                const isCrit = Math.random() * 100 < critChance;
+                const critMult = isCrit ? (skill.critMultiplier || 1.6) : 1.0;
+
+                const effectiveDef = defStats.def * (1 - (skill.armorPierce || 0));
+                const rawDamage = (atkStats.atk * mult * critMult) - (effectiveDef * 0.65);
+                const finalDamage = Math.max(4, Math.round(rawDamage));
+
+                defender.hp = Math.max(0, defender.hp - finalDamage);
+
+                // Sons viscerais
+                if (skill.sound === 'slash') sfx.playVisceralSlash(isCrit);
+                else if (skill.sound === 'gun') sfx.playGunshot();
+                else if (skill.sound === 'phone') sfx.playPhoneRing();
+
+                // Reação 3D brutal do alvo + Explosão de Sangue
+                if (defRig) {
+                    if (defender.hp <= 0) {
+                        triggerDeath3D(defenderSlot);
+                    } else {
+                        defRig.animState = 'hit';
+                        defRig.animTimer = 0;
+                        spawnBloodBurst(defRig.root.position, isCrit ? 55 : 28, isCrit ? 1.35 : 0.9);
+                    }
+
+                    // Revela marcas de sangue no corpo 3D conforme a vida cai
+                    const hpRatio = defender.hp / defender.maxHp;
+                    if (hpRatio < 0.8 && defRig.woundDecals[0]) defRig.woundDecals[0].visible = true;
+                    if (hpRatio < 0.6 && defRig.woundDecals[1]) defRig.woundDecals[1].visible = true;
+                    if (hpRatio < 0.4 && defRig.woundDecals[2]) defRig.woundDecals[2].visible = true;
+                    if (hpRatio < 0.25 && defRig.woundDecals[3]) defRig.woundDecals[3].visible = true;
+                }
+
+                // Tremor de câmera, flash e slow-motion em acertos críticos
+                cameraShake = isCrit ? 0.35 : 0.16;
+                flashScreen(isCrit ? 'rgba(184, 12, 36, 0.5)' : 'rgba(255, 255, 255, 0.14)');
+                if (isCrit) {
+                    triggerHitStop(260);
+                    const lens = document.getElementById('blood-lens-overlay');
+                    lens.style.opacity = '0.9';
+                    setTimeout(() => updateBloodAtmosphere(), 900);
+                }
+
+                if (isCrit) {
+                    spawnFloatingText(defenderPanel, `CRÍTICO! -${finalDamage}`, 'float-crit');
+                    addLog(`GOLPE BRUTAL! ${attacker.name} usa ${skill.name} e rasga ${defender.name} por ${finalDamage} de dano!`, 'log-crit');
+                } else {
+                    spawnFloatingText(defenderPanel, `-${finalDamage}`, 'float-dmg');
+                    addLog(`${attacker.name} usa ${skill.name} e causa ${finalDamage} de dano em ${defender.name}.`, logClass);
+                }
+
+                // Aplica debuff ou sangramento
+                if (skill.debuff && defender.hp > 0) {
+                    applyStatusEffect(defender, { ...skill.debuff, type: 'debuff' });
+                    addLog(`${defender.name} sofreu o efeito [${skill.debuff.label}]!`, logClass);
+                }
+                if (skill.bleed && defender.hp > 0) {
+                    applyStatusEffect(defender, { label: 'Sangrando', bleed: skill.bleed, duration: 2, type: 'debuff' });
+                    addLog(`${defender.name} está sangrando profusamente (${skill.bleed} HP/turno)!`, 'log-ghost');
+                }
+
+                updateBattleUI();
+
+                if (defender.hp <= 0) {
+                    sfx.stopHeartbeat();
+                    setTimeout(() => endBattle(attacker), 1250);
+                    return;
+                }
+
+                setTimeout(() => endActorTurn(attacker), 750);
+            }, 320);
+        }
+
+        function applyStatusEffect(target, effect) {
+            target.effects = target.effects.filter(e => e.label !== effect.label);
+            target.effects.push(effect);
+        }
+
+        function endActorTurn(actor) {
+            actor.effects.forEach(ef => ef.duration--);
+            actor.effects = actor.effects.filter(ef => ef.duration > 0);
+
+            gameState.currentTurnIdx++;
+            if (gameState.currentTurnIdx >= gameState.turnQueue.length) {
+                gameState.round++;
+                startNewRound();
+            } else {
+                beginActorTurn();
+            }
+        }
+
+        function updateBloodAtmosphere() {
+            const p1 = gameState.fighters.p1;
+            const p2 = gameState.fighters.p2;
+            if (!p1 || !p2) return;
+
+            const lowHp = (p1.hp > 0 && p1.hp / p1.maxHp <= 0.32) || (p2.hp > 0 && p2.hp / p2.maxHp <= 0.32);
+            const lens = document.getElementById('blood-lens-overlay');
+            if (lowHp) {
+                lens.style.opacity = '0.85';
+                sfx.startHeartbeat();
+            } else {
+                lens.style.opacity = '0';
+                sfx.stopHeartbeat();
+            }
+        }
+
+        function updateBattleUI() {
+            const activeSlot = gameState.turnQueue[gameState.currentTurnIdx];
+            const activeFighter = gameState.fighters[activeSlot];
+
+            document.getElementById('round-display').textContent = `CENA ${gameState.round} • TURNO ${gameState.currentTurnIdx + 1}/2`;
+            document.getElementById('active-actor-prompt').textContent = `VEZ DE ${activeFighter.name.toUpperCase()}`;
+
+            const initBar = document.getElementById('initiative-bar');
+            initBar.innerHTML = '<span>ORDEM (INI):</span>';
+            gameState.turnQueue.forEach((slot, idx) => {
+                const f = gameState.fighters[slot];
+                const st = getEffectiveStats(f);
+                const pill = document.createElement('div');
+                pill.className = `init-pill ${idx === gameState.currentTurnIdx ? 'active-turn' : ''}`;
+                pill.textContent = `${idx + 1}. ${f.name} (${st.ini})`;
+                initBar.appendChild(pill);
+            });
+
+            ['p1', 'p2'].forEach(slot => {
+                const f = gameState.fighters[slot];
+                const st = getEffectiveStats(f);
+                const panel = document.getElementById(`panel-${slot}`);
+
+                if (slot === activeSlot) panel.classList.add('is-turn');
+                else panel.classList.remove('is-turn');
+
+                document.getElementById(`${slot}-role`).textContent = f.role;
+                document.getElementById(`${slot}-name`).textContent = f.name;
+                document.getElementById(`${slot}-hp-text`).textContent = `${f.hp} / ${f.maxHp}`;
+
+                const pct = Math.max(0, (f.hp / f.maxHp) * 100);
+                const bar = document.getElementById(`${slot}-hp-bar`);
+                bar.style.width = `${pct}%`;
+                if (pct <= 32) bar.classList.add('low-hp');
+                else bar.classList.remove('low-hp');
+
+                updateStatValue(`${slot}-stat-atk`, st.atk, f.baseAtk);
+                updateStatValue(`${slot}-stat-def`, st.def, f.baseDef);
+                updateStatValue(`${slot}-stat-ini`, st.ini, f.baseIni);
+                updateStatValue(`${slot}-stat-crit`, st.crit, f.baseCrit, '%');
+
+                const effectsBox = document.getElementById(`${slot}-effects`);
+                effectsBox.innerHTML = '';
+                f.effects.forEach(ef => {
+                    const chip = document.createElement('div');
+                    chip.className = `effect-chip ${ef.type === 'buff' ? 'effect-buff' : 'effect-debuff'}`;
+                    chip.textContent = `${ef.type === 'buff' ? '▲' : '▼'} ${ef.label} (${ef.duration}t)`;
+                    effectsBox.appendChild(chip);
+                });
+            });
+
+            updateBloodAtmosphere();
+        }
+
+        function updateStatValue(elId, current, base, suffix = '') {
+            const el = document.getElementById(elId);
+            el.textContent = `${current}${suffix}`;
+            el.classList.remove('buff-positive', 'buff-negative');
+            if (current > base) el.classList.add('buff-positive');
+            else if (current < base) el.classList.add('buff-negative');
+        }
+
+        function renderSkillsPanel(disabled) {
+            const activeSlot = gameState.turnQueue[gameState.currentTurnIdx];
+            const actor = gameState.fighters[activeSlot];
+            const container = document.getElementById('skills-container');
+            container.innerHTML = '';
+
+            actor.skills.forEach(skill => {
+                const cd = actor.cooldowns[skill.id] || 0;
+                const btn = document.createElement('button');
+                btn.className = 'skill-btn';
+                btn.disabled = disabled || cd > 0;
+
+                btn.innerHTML = `
+                    <div>
+                        <div class="skill-type">${skill.type}</div>
+                        <div class="skill-name">${skill.name}</div>
+                    </div>
+                    <div class="skill-desc">${skill.desc}</div>
+                    ${cd > 0 ? `<div class="cooldown-overlay">RECARGA: ${cd} TURNO(S)</div>` : ''}
+                `;
+
+                btn.addEventListener('click', () => performSkill(activeSlot, skill.id));
+                container.appendChild(btn);
+            });
+        }
+
+        function spawnFloatingText(parentEl, text, className) {
+            const el = document.createElement('div');
+            el.className = `floating-number ${className}`;
+            el.textContent = text;
+            parentEl.appendChild(el);
+            setTimeout(() => el.remove(), 1150);
+        }
+
+        function flashScreen(color) {
+            const flash = document.getElementById('screen-flash');
+            flash.style.backgroundColor = color;
+            flash.style.opacity = '1';
+            setTimeout(() => flash.style.opacity = '0', 140);
+        }
+
+        function addLog(message, extraClass = '') {
+            const log = document.getElementById('combat-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${extraClass}`;
+            entry.textContent = message;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function endBattle(winner) {
+            sfx.playTerrorStinger();
+            sfx.stopHeartbeat();
+            const modal = document.getElementById('gameover-modal');
+            const sub = document.getElementById('gameover-sub');
+            const title = document.getElementById('gameover-winner');
+            const quote = document.getElementById('gameover-quote');
+
+            if (winner.id === 'ghostface') {
+                sub.textContent = 'MASSACRE EM WOODSBORO';
+                title.textContent = 'GHOSTFACE VENCEU';
+            } else {
+                sub.textContent = 'SOBREVIVENTE DE WOODSBORO';
+                title.textContent = `${winner.name.toUpperCase()} SOBREVIVEU`;
+            }
+            quote.textContent = winner.winQuote;
+            modal.classList.add('active');
+        }
+
+        function rematch() {
+            document.getElementById('gameover-modal').classList.remove('active');
+            startBattle();
+        }
+
+        function returnToMenu() {
+            sfx.stopHeartbeat();
+            document.getElementById('blood-lens-overlay').style.opacity = '0';
+            document.getElementById('gameover-modal').classList.remove('active');
+            camAngle = 0;
+            setupMenuShowcase();
+            switchScreen('screen-menu');
+        }
+
+        window.onload = function () {
+            init3DWorld();
+            requestAnimationFrame(animate3D);
+        };
+    </script>
+</body>
+</html>
