@@ -1,3 +1,4 @@
+HTML
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -330,25 +331,11 @@
         }
 
         .media-visual {
-            height: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            height: 220px;
             position: relative;
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .vis-1 { background: radial-gradient(circle, #3b040c 0%, #07070a 90%); }
-        .vis-2 { background: radial-gradient(circle, #172554 0%, #07070a 90%); }
-        .vis-3 { background: radial-gradient(circle, #4c0519 0%, #09090d 90%); }
-        .vis-4 { background: radial-gradient(circle, #1e293b 0%, #050508 90%); }
-
-        .media-emoji {
-            font-size: 3.5rem;
-            margin-bottom: 0.5rem;
-            filter: drop-shadow(0 0 15px rgba(255, 30, 60, 0.5));
+            background-size: cover;
+            background-position: center;
+            background-color: #090a0e;
         }
 
         .rec-corner {
@@ -358,8 +345,9 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.7rem;
             color: var(--blood-bright);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 0.2rem 0.5rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 30, 60, 0.35);
+            padding: 0.25rem 0.6rem;
             border-radius: 4px;
         }
 
@@ -467,7 +455,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.88);
             backdrop-filter: blur(8px);
             z-index: 500;
             align-items: center;
@@ -484,19 +472,28 @@
             border: 1px solid var(--blood-bright);
             border-radius: 16px;
             padding: 2rem;
-            max-width: 480px;
+            max-width: 560px;
             width: 100%;
             position: relative;
         }
 
+        .modal-img-preview {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 1rem;
+        }
+
         .close-modal {
             position: absolute;
-            top: 14px;
+            top: 12px;
             right: 16px;
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             cursor: pointer;
         }
 
@@ -566,7 +563,7 @@
         <h2>QUAL É O SEU <span>FILME DE TERROR</span> FAVORITO?</h2>
         <p>Entre nas ruas chuvosas de Woodsboro neste RPG tático em turnos. Escolha seu lado no massacre e decida quem chegará vivo aos créditos finais.</p>
         <div class="hero-actions">
-            <a href="#sobre" class="btn-primary">DESCOBRIR O JOGO</a>
+            <a href="scream_rpg_woodsboro_turn_based_slasher (1).html" class="btn-primary">JOGAR AGORA</a>
             <a href="#loja" class="btn-secondary">ACESSAR LOJA DE WOODSBORO</a>
         </div>
     </section>
@@ -603,7 +600,7 @@
         </div>
     </section>
 
-    <!-- 3. MÍDIA / GALERIA -->
+    <!-- 3. MÍDIA / GALERIA (SOMENTE COM AS IMAGENS REAIS) -->
     <section id="galeria">
         <div class="section-header">
             <span class="section-tag">Arquivos Confidenciais</span>
@@ -611,47 +608,36 @@
         </div>
 
         <div class="gallery-grid">
-            <div class="media-card" onclick="openMediaModal('Noite Chuvosa em Woodsboro', 'Cenário 3D atmosférico com iluminação noturna, postes piscando e reflexos no asfalto molhado.')">
-                <div class="media-visual vis-1">
+            <!-- Imagem 1: Ghostface.jpg -->
+            <div class="media-card" onclick="openMediaModal('O Predador de Woodsboro', 'A icônica aparição que aterroriza a cidade. O Ghostface vigia suas vítimas das sombras antes de atacar.', 'Ghostface.jpg')">
+                <div class="media-visual" style="background-image: url('Ghostface.jpg');">
                     <span class="rec-corner">VHS // CENA 01</span>
-                    <div class="media-emoji">🌧️🔪</div>
                 </div>
                 <div class="media-info">
-                    <h4>Noite Chuvosa em Woodsboro</h4>
-                    <p>Clique para inspecionar detalhes da arena 3D.</p>
+                    <h4>O Predador de Woodsboro</h4>
+                    <p>A icônica aparição que aterroriza a cidade.</p>
                 </div>
             </div>
 
-            <div class="media-card" onclick="openMediaModal('O Predador: Ghostface', 'Alta iniciativa, golpes críticos letais e habilidades de terror psicológico para enfraquecer suas vítimas.')">
-                <div class="media-visual vis-2">
-                    <span class="rec-corner">ARQUIVO // KILLER</span>
-                    <div class="media-emoji">👻🩸</div>
-                </div>
-                <div class="media-info">
-                    <h4>O Predador: Ghostface</h4>
-                    <p>Visual e estilo de combate do assassino.</p>
-                </div>
-            </div>
-
-            <div class="media-card" onclick="openMediaModal('A Final Girl: Sidney Prescott', 'Equilíbrio perfeito entre defesa tática, estancamento de ferimentos e disparos precisos.')">
-                <div class="media-visual vis-3">
+            <!-- Imagem 2: 2708dbb911a452e408251534ebbc0584.jpg -->
+            <div class="media-card" onclick="openMediaModal('A Final Girl: Sidney Prescott', 'Determinação e sobrevivência contra o mal. Sidney se arma e se prepara para enfrentar o assassino.', '2708dbb911a452e408251534ebbc0584.jpg')">
+                <div class="media-visual" style="background-image: url('2708dbb911a452e408251534ebbc0584.jpg');">
                     <span class="rec-corner">ARQUIVO // SURVIVOR</span>
-                    <div class="media-emoji">🔫🛡️</div>
                 </div>
                 <div class="media-info">
-                    <h4>Os Sobreviventes</h4>
-                    <p>Elenco jogável com habilidades únicas de sobrevivência.</p>
+                    <h4>A Final Girl: Sidney Prescott</h4>
+                    <p>Determinação e sobrevivência contra o mal.</p>
                 </div>
             </div>
 
-            <div class="media-card" onclick="openMediaModal('As Regras do Terror', 'Sistema de buffs, debuffs, hemorragia e câmera lenta dramática em acertos críticos.')">
-                <div class="media-visual vis-4">
+            <!-- Imagem 3: panico-vi-foto-capa.jpg -->
+            <div class="media-card" onclick="openMediaModal('O Ataque de Ghostface', 'Momentos de pura tensão e combate. Uma investida furtiva e letal com a lâmina Buck 120.', 'panico-vi-foto-capa.jpg')">
+                <div class="media-visual" style="background-image: url('panico-vi-foto-capa.jpg');">
                     <span class="rec-corner">VHS // GAMEPLAY</span>
-                    <div class="media-emoji">📼⚡</div>
                 </div>
                 <div class="media-info">
-                    <h4>Mecânicas de RPG</h4>
-                    <p>Turnos táticos e efeitos viscerais em tempo real.</p>
+                    <h4>O Ataque de Ghostface</h4>
+                    <p>Momentos de pura tensão e combate.</p>
                 </div>
             </div>
         </div>
@@ -731,12 +717,13 @@
         </div>
     </div>
 
-    <!-- MODAL DA GALERIA -->
+    <!-- MODAL DA GALERIA (COM PREVIEW AMPLIADO DA IMAGEM) -->
     <div id="media-modal" class="modal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeMediaModal()">×</button>
             <span class="section-tag">Visualizador de Arquivo</span>
-            <h3 id="media-modal-title" style="font-family: 'Cinzel', serif; margin-bottom: 0.8rem;"></h3>
+            <img id="media-modal-img" class="modal-img-preview" src="" alt="Preview da Galeria">
+            <h3 id="media-modal-title" style="font-family: 'Cinzel', serif; margin-bottom: 0.5rem;"></h3>
             <p id="media-modal-desc" style="color: var(--text-muted); font-size: 0.95rem;"></p>
         </div>
     </div>
@@ -768,7 +755,7 @@
 
             let total = 0;
             itemsContainer.innerHTML = '';
-            cart.forEach((item, index) => {
+            cart.forEach((item) => {
                 total += item.price;
                 itemsContainer.innerHTML += `
                     <div class="cart-item">
@@ -797,7 +784,8 @@
             toggleCart();
         }
 
-        function openMediaModal(title, desc) {
+        function openMediaModal(title, desc, imgSrc) {
+            document.getElementById('media-modal-img').src = imgSrc;
             document.getElementById('media-modal-title').textContent = title;
             document.getElementById('media-modal-desc').textContent = desc;
             document.getElementById('media-modal').classList.add('active');
